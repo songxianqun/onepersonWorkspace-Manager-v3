@@ -5,14 +5,11 @@ import {
   Eye,
   CheckCircle2,
   ChevronRight,
-  Zap,
-  ArrowUpRight,
   Bell,
   Filter,
   LayoutGrid,
   Bot,
   ChevronLeft,
-  AlertTriangle,
 } from "lucide-react"
 import { workItems, type WorkItem, type Priority } from "@/data/supportData"
 import { ItemDetailPanel } from "@/components/support/ItemDetailPanel"
@@ -96,16 +93,30 @@ const priorityConfig: Record<Priority, { label: string; color: string; bg: strin
   watch: { label: "关注", color: "text-blue-500", bg: "bg-blue-500/10", icon: Eye },
 }
 
-const sourceLabel: Record<string, { label: string; color: string }> = {
-  submitted: { label: "员工提交", color: "text-primary" },
-  rule: { label: "规则触发", color: "text-blue-500" },
-  proactive: { label: "主动介入", color: "text-green-600" },
+// 截图样式：AI 建议文字 + 右侧彩色一键按钮
+const aiActionConfig: Record<string, { suggest: string; btnLabel: string; btnClass: string }> = {
+  supplement: {
+    suggest: "建议补录",
+    btnLabel: "一键打回补录",
+    btnClass: "bg-destructive text-white hover:bg-destructive/90",
+  },
+  handle: {
+    suggest: "建议通过",
+    btnLabel: "一键复核通过",
+    btnClass: "bg-green-600 text-white hover:bg-green-600/90",
+  },
+  escalate: {
+    suggest: "建议协同",
+    btnLabel: "一键提请协同",
+    btnClass: "bg-destructive text-white hover:bg-destructive/90",
+  },
 }
 
-const aiActionLabel: Record<string, string> = {
-  handle: "可直接处理",
-  supplement: "建议补录数据",
-  escalate: "建议提请协同",
+// 规则知会专属：介入按钮
+const ruleActionConfig = {
+  suggest: "建议介入",
+  btnLabel: "一键主动介入",
+  btnClass: "bg-orange-500 text-white hover:bg-orange-500/90",
 }
 
 // ─── 主页面 ────────────────────────────────────────────
@@ -435,109 +446,113 @@ function WorkItemCard({ item, isSelected, onClick }: {
   item: WorkItem; isSelected: boolean; onClick: () => void
 }) {
   const pCfg = priorityConfig[item.priority]
-  const PIcon = pCfg.icon
-  const src = sourceLabel[item.sourceType]
+  const isRule = item.sourceType === "rule"
 
-  // 该事项是否有关联风险
-  const relatedRisk = riskAlerts.find((r) => r.itemId === item.id)
+  // 左侧竖线颜色
+  const borderColorMap: Record<Priority, string> = {
+    urgent: "border-l-destructive",
+    normal: "border-l-green-600",
+    watch: "border-l-orange-500",
+  }
+
+  // AI 操作配置：规则知会固定用介入，其余用 aiActionConfig
+  const aiCfg = isRule ? ruleActionConfig : (aiActionConfig[item.aiAction] ?? aiActionConfig.handle)
 
   return (
     <div
       onClick={onClick}
       className={cn(
-        "group bg-card border rounded-xl p-4 cursor-pointer transition-all duration-200",
-        isSelected
-          ? "border-primary shadow-md ring-1 ring-primary/20"
-          : "border-border hover:border-primary/30 hover:shadow-sm"
+        "group bg-card border border-border border-l-4 rounded-xl overflow-hidden cursor-pointer transition-all duration-200",
+        borderColorMap[item.priority],
+        isSelected ? "shadow-md ring-1 ring-primary/20" : "hover:shadow-sm hover:border-primary/30"
       )}
     >
-      <div className="flex items-start gap-3">
-        {/* 优先级标识 */}
-        <div className={cn("mt-0.5 flex items-center gap-1.5 shrink-0 px-2 py-1 rounded-lg", pCfg.bg)}>
-          <PIcon className={cn("w-3.5 h-3.5", pCfg.color)} />
-          <span className={cn("text-xs font-semibold", pCfg.color)}>{pCfg.label}</span>
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
-              {item.title}
+      {/* 卡片主体 */}
+      <div className="px-4 pt-3 pb-2">
+        {/* 顶行：优先级 badge + 业务线 + 来源 + 时间 */}
+        <div className="flex items-center gap-1.5 mb-2">
+          <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-sm", pCfg.bg, pCfg.color)}>
+            {pCfg.label}
+          </span>
+          <span className={cn(
+            "text-[10px] px-1.5 py-0.5 rounded-sm font-medium",
+            item.businessLine === "资管" ? "bg-orange-500/10 text-orange-600"
+            : item.businessLine === "投行" ? "bg-blue-500/10 text-blue-600"
+            : "bg-green-600/10 text-green-700"
+          )}>
+            {item.businessLine}
+          </span>
+          {isRule && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-orange-500/10 text-orange-600 font-medium">
+              规则知会
             </span>
-            {/* 关联风险角标 */}
-            {relatedRisk && (
-              <span className={cn(
-                "flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-medium",
-                relatedRisk.level === "high"
-                  ? "bg-destructive/10 text-destructive"
-                  : relatedRisk.level === "medium"
-                  ? "bg-warning/10 text-warning"
-                  : "bg-blue-500/10 text-blue-500"
-              )}>
-                <AlertTriangle className="w-2.5 h-2.5" />
-                {riskLevelConfig[relatedRisk.level].label}
-              </span>
-            )}
-            {item.status === "escalated" && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-destructive/10 text-destructive font-medium">已提请协同</span>
-            )}
-            {item.status === "processing" && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-warning/10 text-warning font-medium">处理中</span>
-            )}
-          </div>
-          <div className="flex items-center gap-2.5 text-xs text-muted-foreground mb-2.5 flex-wrap">
-            <span className={cn("font-medium", src.color)}>{src.label}</span>
-            <span>·</span>
-            <span className={cn(
-              "px-1.5 py-0.5 rounded text-xs font-medium",
-              item.businessLine === "资管" ? "bg-orange-500/10 text-orange-600"
-              : item.businessLine === "投行" ? "bg-blue-500/10 text-blue-600"
-              : "bg-green-600/10 text-green-700"
-            )}>{item.businessLine}</span>
-            <span className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{item.stage}</span>
-            <span>·</span>
-            <span>{item.submitter}</span>
-            <span>·</span>
-            <span>{item.submittedAt}</span>
-          </div>
-
-          {/* AI 预判区 */}
-          <div className="flex items-start gap-2 bg-primary/5 border border-primary/15 rounded-lg px-3 py-2">
-            <Bot className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
-            <div className="flex-1 min-w-0">
-              <span className="text-xs text-primary font-medium mr-2">AI预判</span>
-              <span className="text-xs text-muted-foreground">{item.aiPrejudge}</span>
-            </div>
-            <span className={cn(
-              "text-xs px-2 py-0.5 rounded-full font-medium shrink-0",
-              item.aiAction === "escalate" ? "bg-destructive/10 text-destructive"
-              : item.aiAction === "supplement" ? "bg-warning/10 text-warning"
-              : "bg-success/10 text-success"
-            )}>
-              {aiActionLabel[item.aiAction]}
-            </span>
-          </div>
-        </div>
-
-        {/* 操作按钮 */}
-        <div className="flex items-center gap-2 shrink-0 ml-1">
-          {item.sourceType === "rule" ? (
-            <>
-              <ActionBtn label="提前介入" variant="primary" onClick={(e) => e.stopPropagation()} />
-              <ActionBtn label="知晓" variant="ghost" onClick={(e) => e.stopPropagation()} />
-            </>
-          ) : item.status === "escalated" ? (
-            <ActionBtn label="查看议题" variant="ghost" icon={ArrowUpRight} onClick={(e) => e.stopPropagation()} />
-          ) : (
-            <>
-              <ActionBtn label="处理" variant="primary" onClick={(e) => e.stopPropagation()} />
-              <ActionBtn label="提请协同" variant="danger" icon={Zap} onClick={(e) => e.stopPropagation()} />
-            </>
           )}
-          <ChevronRight className={cn(
-            "w-4 h-4 text-muted-foreground/40 transition-all duration-200",
-            isSelected ? "rotate-90 text-primary" : "group-hover:text-primary/50"
-          )} />
+          {item.status === "escalated" && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-destructive/10 text-destructive font-medium">
+              已提请协同
+            </span>
+          )}
+          <span className="text-[10px] text-muted-foreground ml-auto">{item.submittedAt}</span>
         </div>
+
+        {/* 三层文字（无背景框） */}
+        <div className="space-y-0.5 mb-3">
+          <div className="text-xs text-muted-foreground leading-relaxed">
+            对象：{item.subject.object}
+          </div>
+          <div className="text-xs font-semibold text-foreground leading-relaxed">
+            动作：{item.subject.action}
+          </div>
+          <div className="text-xs text-foreground leading-relaxed">
+            结果：{item.subject.result}
+          </div>
+        </div>
+
+        {/* AI 建议条（分割线 + 机器人图标 + 建议文字 + 彩色按钮） */}
+        <div className="flex items-center gap-2 pt-2 border-t border-border/60">
+          <Bot className="w-3.5 h-3.5 text-primary shrink-0" />
+          <span className="text-xs flex-1 min-w-0">
+            <span className="font-semibold text-primary">{aiCfg.suggest}</span>
+            <span className="text-muted-foreground"> · {isRule ? item.aiPrejudge : item.aiPrejudge}</span>
+          </span>
+          <button
+            onClick={(e) => e.stopPropagation()}
+            className={cn(
+              "text-xs px-3 py-1.5 rounded-lg font-semibold shrink-0 transition-all active:scale-95",
+              aiCfg.btnClass
+            )}
+          >
+            {aiCfg.btnLabel}
+          </button>
+        </div>
+      </div>
+
+      {/* 底部次操作栏 */}
+      <div className="flex items-center gap-3 px-4 py-1.5 bg-muted/30 border-t border-border/50">
+        <button
+          onClick={(e) => { e.stopPropagation(); onClick() }}
+          className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+        >
+          查看详情
+        </button>
+        <span className="text-border text-[11px]">·</span>
+        <button
+          onClick={(e) => e.stopPropagation()}
+          className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+        >
+          补充备注
+        </button>
+        {item.status === "escalated" && (
+          <>
+            <span className="text-border text-[11px]">·</span>
+            <button
+              onClick={(e) => e.stopPropagation()}
+              className="text-[11px] text-primary hover:text-primary/80 transition-colors"
+            >
+              查看议题
+            </button>
+          </>
+        )}
       </div>
     </div>
   )
@@ -571,24 +586,4 @@ function TabBtn({ active, label, count, countColor, onClick }: {
     </button>
   )
 }
-
-// ─── ActionBtn ─────────────────────────────────────────
-function ActionBtn({ label, variant, icon: Icon, onClick }: {
-  label: string; variant: "primary" | "ghost" | "danger"; icon?: React.ElementType
-  onClick: (e: React.MouseEvent) => void
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150",
-        variant === "primary" && "bg-primary text-primary-foreground hover:opacity-90",
-        variant === "ghost" && "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80",
-        variant === "danger" && "bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20"
-      )}
-    >
-      {Icon && <Icon className="w-3 h-3" />}
-      {label}
-    </button>
-  )
-}
+

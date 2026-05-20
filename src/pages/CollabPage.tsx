@@ -1,6 +1,5 @@
 import { useState } from "react"
 import {
-  Plus,
   AlertTriangle,
   Users,
   Database,
@@ -13,7 +12,6 @@ import {
   ArrowRight,
   ChevronDown,
   ChevronUp,
-  Bell,
   Circle,
   BarChart3,
   Siren,
@@ -45,7 +43,7 @@ const sectionConfig: {
     label: "请示事项",
     sub: "审批待办、请示流转、签署确认",
     icon: FileCheck,
-    badgeText: "8项待处理",
+    badgeText: "待处理",
     badgeVariant: "danger",
     accentFrom: "from-[hsl(28,85%,55%)]",
     accentTo: "to-[hsl(38,90%,60%)]",
@@ -132,8 +130,9 @@ const triggerLabel: Record<string, { label: string; color: string }> = {
 // ─── 主页面 ──────────────────────────────────────────
 export function CollabPage() {
   const [activeSection, setActiveSection] = useState<CollabSection>("agenda")
-  const [selectedId, setSelectedId] = useState<string | null>("ag-001")
-  const [filterType, setFilterType] = useState<string>("all")
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+
+  const agendaPendingCount = agendas.filter(a => !["closed"].includes(a.status)).length
 
   return (
     <div className="h-full flex flex-col">
@@ -145,6 +144,10 @@ export function CollabPage() {
             {sectionConfig.map((sec) => {
               const Icon = sec.icon
               const isActive = activeSection === sec.key
+              // agenda 卡片动态badge
+              const badgeText = sec.key === "agenda"
+                ? `${agendaPendingCount}项待处理`
+                : sec.badgeText
               return (
                 <button
                   key={sec.key}
@@ -185,7 +188,7 @@ export function CollabPage() {
                           {sec.label}
                         </span>
                         <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium", badgeStyle[sec.badgeVariant])}>
-                          {sec.badgeText}
+                          {badgeText}
                         </span>
                       </div>
                       <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">{sec.sub}</p>
@@ -208,8 +211,6 @@ export function CollabPage() {
           <AgendaSection
             selectedId={selectedId}
             setSelectedId={setSelectedId}
-            filterType={filterType}
-            setFilterType={setFilterType}
           />
         )}
         {activeSection === "business" && <BusinessSection />}
@@ -232,47 +233,23 @@ export function CollabPage() {
 function AgendaSection({
   selectedId,
   setSelectedId,
-  filterType,
-  setFilterType,
 }: {
   selectedId: string | null
   setSelectedId: (id: string | null) => void
-  filterType: string
-  setFilterType: (t: string) => void
 }) {
-  const filtered = agendas.filter((a) => filterType === "all" || a.agendaType === filterType)
+  const filtered = agendas
   const selected = agendas.find((a) => a.id === selectedId) || null
-
-  const stats = {
-    total: agendas.length,
-    active: agendas.filter((a) => ["pending", "discussing", "issued", "tracking"].includes(a.status)).length,
-    highPriority: agendas.filter((a) => a.priority === "high").length,
-    info: agendas.filter((a) => a.triggerType === "rule").length,
-  }
 
   return (
     <div className="flex">
       <div className="flex-1 flex flex-col min-w-0">
-        {/* 统计栏 + 筛选 */}
-        <div className="shrink-0 border-b border-border px-6 py-3 bg-background/80">
-          <div className="flex items-center justify-between mb-2.5">
-            <div className="flex items-center gap-4">
-              <StatPill icon={AlertTriangle} label="高优议题" value={stats.highPriority} color="text-destructive" bg="bg-destructive/8" />
-              <StatPill icon={Users} label="进行中" value={stats.active} color="text-warning" bg="bg-warning/8" />
-              <StatPill icon={Bell} label="规则知会" value={stats.info} color="text-blue-500" bg="bg-blue-500/8" />
-              <StatPill icon={CheckCircle2} label="议题总数" value={stats.total} color="text-muted-foreground" bg="bg-muted" />
-            </div>
-            <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
-              <Plus className="w-4 h-4" />
-              发起议题
-            </button>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <FilterBtn label="全部" active={filterType === "all"} onClick={() => setFilterType("all")} />
-            {Object.entries(agendaTypeConfig).map(([key, cfg]) => (
-              <FilterBtn key={key} label={cfg.label} icon={cfg.icon} active={filterType === key} onClick={() => setFilterType(key)} />
-            ))}
-          </div>
+        {/* 区块标题 */}
+        <div className="shrink-0 border-b border-border px-6 py-3 bg-background/80 flex items-center gap-2">
+          <FileCheck className="w-4 h-4 text-primary" />
+          <span className="text-base font-bold text-foreground">请示事项</span>
+          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">
+            {agendas.filter(a => !["closed"].includes(a.status)).length}
+          </span>
         </div>
         <div className="p-5 space-y-3">
           {filtered.map((agenda) => (
@@ -590,88 +567,111 @@ function AIAdviceCard({ advice }: { advice: string[] }) {
   )
 }
 
-function StatPill({ icon: Icon, label, value, color, bg }: { icon: React.ElementType; label: string; value: number; color: string; bg: string }) {
-  return (
-    <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-lg", bg)}>
-      <Icon className={cn("w-3.5 h-3.5", color)} />
-      <span className={cn("text-base font-bold leading-none", color)}>{value}</span>
-      <span className="text-xs text-muted-foreground">{label}</span>
-    </div>
-  )
-}
-
-function FilterBtn({ label, icon: Icon, active, onClick }: { label: string; icon?: React.ElementType; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all",
-        active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
-      )}
-    >
-      {Icon && <Icon className="w-3 h-3" />}
-      {label}
-    </button>
-  )
-}
-
 // ─── 议题卡片 ─────────────────────────────────────────
 function AgendaCard({ agenda, isSelected, onClick }: { agenda: Agenda; isSelected: boolean; onClick: () => void }) {
   const typeCfg = agendaTypeConfig[agenda.agendaType]
-  const TypeIcon = typeCfg.icon
   const pCfg = priorityConfig[agenda.priority]
   const sCfg = statusConfig[agenda.status]
   const StatusIcon = sCfg.icon
   const trig = triggerLabel[agenda.triggerType]
 
+  // AI 建议文本（根据优先级和类型生成）
+  const aiSuggests: Record<string, string> = {
+    "ag-001": "建议召集条线负责人协商",
+    "ag-002": "建议提交财务部审批",
+    "ag-003": "建议数据治理团队先行评估",
+    "ag-004": "无需决策，可知晓归档",
+    "ag-005": "建议本周内召集各条线确认指标精简方案",
+  }
+  const aiSuggest = aiSuggests[agenda.id] ?? "建议安排专项讨论"
+
   return (
     <div
       onClick={onClick}
       className={cn(
-        "group bg-card border rounded-xl p-4 cursor-pointer transition-all duration-200",
+        "group bg-card border border-l-4 rounded-xl overflow-hidden cursor-pointer transition-all duration-200",
+        agenda.priority === "high" ? "border-l-destructive" :
+        agenda.priority === "medium" ? "border-l-warning" : "border-l-blue-400",
         isSelected ? "border-primary shadow-md ring-1 ring-primary/20" : "border-border hover:border-primary/30 hover:shadow-sm",
-        agenda.priority === "info" && !isSelected && "opacity-75"
+        agenda.priority === "info" && !isSelected && "opacity-80"
       )}
     >
-      <div className="flex items-start gap-3">
-        <div className={cn("mt-0.5 p-2 rounded-lg shrink-0", typeCfg.bg)}>
-          <TypeIcon className={cn("w-4 h-4", typeCfg.color)} />
+      {/* 卡片主体 */}
+      <div className="px-4 pt-3 pb-2">
+        {/* 顶行：优先级 + 类型 + 状态 + 时间 */}
+        <div className="flex items-center gap-1.5 mb-2">
+          <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-sm", pCfg.bg, pCfg.color)}>
+            {pCfg.label}
+          </span>
+          <span className={cn("text-[10px] px-1.5 py-0.5 rounded-sm font-medium", typeCfg.bg, typeCfg.color)}>
+            {typeCfg.label}
+          </span>
+          <div className={cn("flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-sm bg-muted", sCfg.color)}>
+            <StatusIcon className="w-2.5 h-2.5" />
+            {sCfg.label}
+          </div>
+          <span className={cn("text-[10px] font-medium ml-0.5", trig.color)}>{trig.label}</span>
+          <span className="text-[10px] text-muted-foreground ml-auto">{agenda.initiatedAt}</span>
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-3 mb-1.5">
-            <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors leading-snug">{agenda.topic}</span>
-            <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium shrink-0", pCfg.bg, pCfg.color)}>{pCfg.label}</span>
+
+        {/* 标题 */}
+        <div className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors leading-snug mb-1.5">
+          {agenda.topic}
+        </div>
+
+        {/* 摘要描述 */}
+        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-3">
+          {agenda.description}
+        </p>
+
+        {/* AI 建议条 */}
+        <div className="flex items-center gap-2 px-3 py-2 bg-primary/5 border border-primary/15 rounded-lg mb-3">
+          <div className="w-4 h-4 rounded bg-primary/20 flex items-center justify-center shrink-0">
+            <span className="text-[9px] font-bold text-primary">AI</span>
           </div>
-          <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2 flex-wrap">
-            <span className={cn("font-medium", trig.color)}>{trig.label}</span>
-            <span>·</span>
-            <span>{agenda.initiator}</span>
-            <span>·</span>
-            <span>{agenda.initiatedAt}</span>
-            <span>·</span>
-            <div className={cn("flex items-center gap-1", sCfg.color)}>
-              <StatusIcon className="w-3 h-3" />
-              <span className="font-medium">{sCfg.label}</span>
-            </div>
-          </div>
-          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-3">{agenda.description}</p>
-          <div className="flex items-center justify-between">
-            <div className="flex flex-wrap gap-1.5">
-              {agenda.deptInvolved.map((d) => (
-                <span key={d} className="text-xs px-2 py-0.5 bg-muted rounded text-muted-foreground">{d}</span>
-              ))}
-              {agenda.coordinators.map((c) => (
-                <span key={c} className="text-xs px-2 py-0.5 bg-primary/8 rounded text-primary font-medium">{c}</span>
-              ))}
-            </div>
-            <div className="ml-3 shrink-0">
-              {agenda.priority === "info" ? (
-                <button onClick={(e) => e.stopPropagation()} className="px-3 py-1 bg-blue-500/10 text-blue-600 border border-blue-500/20 rounded-lg text-xs font-medium hover:bg-blue-500/20 transition-colors">已知晓</button>
-              ) : (
-                <button onClick={(e) => e.stopPropagation()} className="px-3 py-1 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:opacity-90 transition-opacity">进入圆桌</button>
-              )}
-            </div>
-          </div>
+          <span className="text-xs text-foreground">
+            <span className="font-semibold text-primary">AI建议：</span>
+            {aiSuggest}
+          </span>
+        </div>
+
+        {/* 操作按钮行 */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {agenda.priority === "info" ? (
+            <button
+              onClick={(e) => e.stopPropagation()}
+              className="px-3 py-1.5 bg-blue-500/10 text-blue-600 border border-blue-500/20 rounded-lg text-xs font-semibold hover:bg-blue-500/20 transition-colors"
+            >
+              已知晓
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={(e) => e.stopPropagation()}
+                className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity"
+              >
+                批准执行
+              </button>
+              <button
+                onClick={(e) => e.stopPropagation()}
+                className="px-3 py-1.5 bg-background text-destructive border border-destructive/40 rounded-lg text-xs font-semibold hover:bg-destructive/5 transition-colors"
+              >
+                驳回
+              </button>
+              <button
+                onClick={(e) => e.stopPropagation()}
+                className="px-3 py-1.5 bg-background text-foreground border border-border rounded-lg text-xs font-medium hover:bg-muted transition-colors"
+              >
+                转交
+              </button>
+              <button
+                onClick={(e) => e.stopPropagation()}
+                className="px-3 py-1.5 bg-background text-foreground border border-border rounded-lg text-xs font-medium hover:bg-muted transition-colors"
+              >
+                批注意见
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -786,10 +786,12 @@ function AgendaDetailPanel({ agenda, onClose }: { agenda: Agenda; onClose: () =>
             </button>
           ) : (
             <>
-              <button className="w-full py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">进入圆桌，开始讨论</button>
-              <button className="w-full py-2 bg-success/10 text-success border border-success/20 rounded-lg text-sm font-medium hover:bg-success/20 transition-colors flex items-center justify-center gap-2">
-                <CheckCircle2 className="w-4 h-4" />形成决策并下发指令
-              </button>
+              <button className="w-full py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">批准执行</button>
+              <div className="flex gap-2">
+                <button className="flex-1 py-2 bg-background text-destructive border border-destructive/40 rounded-lg text-sm font-semibold hover:bg-destructive/5 transition-colors">驳回</button>
+                <button className="flex-1 py-2 bg-background text-foreground border border-border rounded-lg text-sm font-medium hover:bg-muted transition-colors">转交</button>
+                <button className="flex-1 py-2 bg-background text-foreground border border-border rounded-lg text-sm font-medium hover:bg-muted transition-colors">批注意见</button>
+              </div>
             </>
           )}
         </div>
