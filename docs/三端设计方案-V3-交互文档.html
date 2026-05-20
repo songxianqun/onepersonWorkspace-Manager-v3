@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>业务支持端 & 协同端 — 设计方案 V3</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --primary: #6366f1;
+    --primary-light: #eef2ff;
+    --success: #22c55e;
+    --success-light: #f0fdf4;
+    --warning: #f59e0b;
+    --warning-light: #fffbeb;
+    --danger: #ef4444;
+    --danger-light: #fef2f2;
+    --blue: #3b82f6;
+    --blue-light: #eff6ff;
+    --orange: #f97316;
+    --orange-light: #fff7ed;
+    --teal: #14b8a6;
+    --teal-light: #f0fdfa;
+    --border: #e5e7eb;
+    --bg: #f9fafb;
+    --card: #ffffff;
+    --text: #111827;
+    --muted: #6b7280;
+    --muted-bg: #f3f4f6;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.10);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Noto Sans SC", "PingFang SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ─── 顶部标题区 ─── */
+  .page-header {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: #fff;
+    padding: 36px 48px 28px;
+  }
+  .page-header h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .page-header p  { font-size: 13px; opacity: .8; }
+  .page-header .badge {
+    display: inline-block; background: rgba(255,255,255,.2);
+    border-radius: 20px; padding: 2px 10px; font-size: 12px; margin-left: 10px;
+    vertical-align: middle;
+  }
+
+  /* ─── 主 Tab 导航 ─── */
+  .main-tabs {
+    display: flex; gap: 0;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 0 48px;
+    position: sticky; top: 0; z-index: 50;
+    box-shadow: var(--shadow);
+  }
+  .main-tabs button {
+    padding: 14px 20px; font-size: 14px; font-weight: 500;
+    background: none; border: none; cursor: pointer;
+    color: var(--muted); border-bottom: 3px solid transparent;
+    transition: all .15s;
+  }
+  .main-tabs button.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+  .main-tabs button:hover:not(.active) { color: var(--text); }
+
+  /* ─── 主内容 ─── */
+  .main-content { padding: 32px 48px; max-width: 1200px; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ─── 通用卡片 ─── */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+    box-shadow: var(--shadow);
+  }
+  .card + .card { margin-top: 16px; }
+  .section-title {
+    font-size: 15px; font-weight: 700; color: var(--text);
+    display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
+  }
+  .section-title .dot { width: 4px; height: 18px; border-radius: 2px; background: var(--primary); }
+  .section-subtitle {
+    font-size: 13px; color: var(--muted); margin-bottom: 12px; font-weight: 400;
+  }
+
+  /* ─── Badge ─── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  }
+  .badge-danger  { background: var(--danger-light);  color: var(--danger); }
+  .badge-warning { background: var(--warning-light); color: var(--warning); }
+  .badge-success { background: var(--success-light); color: var(--success); }
+  .badge-primary { background: var(--primary-light); color: var(--primary); }
+  .badge-blue    { background: var(--blue-light);    color: var(--blue); }
+  .badge-orange  { background: var(--orange-light);  color: var(--orange); }
+  .badge-muted   { background: var(--muted-bg);      color: var(--muted); }
+  .badge-teal    { background: var(--teal-light);    color: var(--teal); }
+
+  /* ─── 三端架构图 ─── */
+  .arch-grid {
+    display: grid; grid-template-columns: 1fr 24px 1fr 24px 1fr;
+    align-items: stretch; gap: 0; margin: 24px 0;
+  }
+  .arch-col {
+    border-radius: var(--radius); padding: 20px; min-height: 220px;
+  }
+  .arch-col.employee { background: #eff6ff; border: 1.5px solid #bfdbfe; }
+  .arch-col.support  { background: #fff7ed; border: 1.5px solid #fed7aa; }
+  .arch-col.collab   { background: #fef2f2; border: 1.5px dashed #fca5a5; }
+  .arch-col h3 { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .arch-col .arch-role { font-size: 11px; color: var(--muted); margin-bottom: 12px; }
+  .arch-col ul { list-style: none; }
+  .arch-col ul li {
+    font-size: 12px; padding: 5px 8px; border-radius: 6px;
+    margin-bottom: 6px; background: rgba(255,255,255,.7);
+    display: flex; align-items: center; gap-6px; gap: 6px;
+  }
+  .arch-arrow {
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: var(--muted); padding: 0 4px;
+  }
+  .arch-col .sub-box {
+    border-radius: 8px; padding: 8px 10px; margin-top: 8px;
+    font-size: 11px; border: 1px dashed;
+  }
+  .sub-box-blue   { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
+  .sub-box-orange { background: #fff7ed; border-color: #fdba74; color: #c2410c; }
+  .sub-box-ai     { background: var(--primary-light); border-color: #a5b4fc; color: #4338ca; }
+
+  /* ─── 流程步骤 ─── */
+  .flow {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 4px;
+    margin: 10px 0;
+  }
+  .flow-step {
+    padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;
+    border: 1px solid; white-space: nowrap;
+  }
+  .flow-step.primary  { background: var(--primary-light); border-color: #a5b4fc; color: var(--primary); }
+  .flow-step.orange   { background: var(--orange-light);  border-color: #fdba74; color: var(--orange); }
+  .flow-step.teal     { background: var(--teal-light);    border-color: #5eead4; color: var(--teal); }
+  .flow-step.danger   { background: var(--danger-light);  border-color: #fca5a5; color: var(--danger); }
+  .flow-step.success  { background: var(--success-light); border-color: #86efac; color: var(--success); }
+  .flow-step.warning  { background: var(--warning-light); border-color: #fcd34d; color: var(--warning); }
+  .flow-step.muted    { background: var(--muted-bg);      border-color: var(--border); color: var(--muted); }
+  .flow-arrow { color: var(--muted); font-size: 14px; }
+
+  /* ─── 闭环行 ─── */
+  .loop-row { margin-bottom: 16px; }
+  .loop-label {
+    font-size: 12px; font-weight: 700; color: var(--muted);
+    margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
+  }
+  .loop-label .num {
+    width: 20px; height: 20px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center;
+    background: var(--primary); color: #fff; font-size: 11px;
+  }
+  .loop-desc { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  /* ─── 功能模块 Grid ─── */
+  .module-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;
+    margin-top: 14px;
+  }
+  .module-card {
+    border-radius: var(--radius-sm); padding: 14px 16px;
+    border: 1px solid var(--border); background: var(--card);
+  }
+  .module-card h4 {
+    font-size: 13px; font-weight: 600; margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .module-card p { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .module-icon {
+    width: 22px; height: 22px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+  }
+
+  /* ─── 表格 ─── */
+  table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+  th {
+    background: var(--muted-bg); padding: 9px 12px; text-align: left;
+    font-weight: 600; font-size: 12px; color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg); }
+
+  /* ─── 协同端五模块导航卡片 ─── */
+  .collab-nav {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;
+    margin: 16px 0;
+  }
+  .collab-nav-card {
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 14px; cursor: pointer; transition: all .15s; position: relative;
+    overflow: hidden; background: var(--card);
+  }
+  .collab-nav-card:hover, .collab-nav-card.active {
+    border-color: rgba(99,102,241,.4);
+    background: rgba(99,102,241,.04);
+  }
+  .collab-nav-card .accent-bar {
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    border-radius: 12px 12px 0 0; opacity: 0;
+    transition: opacity .15s;
+  }
+  .collab-nav-card.active .accent-bar,
+  .collab-nav-card:hover .accent-bar { opacity: 1; }
+  .collab-nav-card .cn-icon {
+    width: 36px; height: 36px; border-radius: 10px; display: flex;
+    align-items: center; justify-content: center; font-size: 16px;
+    margin-bottom: 8px; background: var(--muted-bg);
+  }
+  .collab-nav-card .cn-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .collab-nav-card .cn-sub   { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+  /* ─── 内容面板 (协同) ─── */
+  .collab-panel { display: none; }
+  .collab-panel.active { display: block; }
+
+  /* ─── 数据模型字段 ─── */
+  .model-block {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 16px; margin-top: 12px;
+  }
+  .model-block h4 { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: var(--primary); }
+  .field-row {
+    display: flex; gap: 12px; padding: 6px 0;
+    border-bottom: 1px solid var(--border); font-size: 12px;
+  }
+  .field-row:last-child { border-bottom: none; }
+  .field-name  { width: 140px; font-weight: 600; color: var(--text); flex-shrink: 0; font-family: monospace; font-size: 12px; }
+  .field-type  { width: 80px; color: var(--primary); flex-shrink: 0; font-family: monospace; }
+  .field-desc  { color: var(--muted); flex: 1; }
+
+  /* ─── JSON 示例 ─── */
+  .json-block {
+    background: #1e293b; color: #e2e8f0; border-radius: var(--radius-sm);
+    padding: 14px 16px; font-family: monospace; font-size: 12px;
+    line-height: 1.8; overflow-x: auto; margin-top: 10px;
+  }
+  .json-key    { color: #93c5fd; }
+  .json-string { color: #86efac; }
+  .json-muted  { color: #64748b; }
+
+  /* ─── 状态机图 ─── */
+  .state-machine {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+    padding: 16px; background: var(--bg); border-radius: var(--radius-sm);
+    border: 1px solid var(--border); margin-top: 12px;
+  }
+  .state {
+    padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500;
+    border: 1.5px solid;
+  }
+  .state.start   { background: #eff6ff; border-color: #93c5fd; color: var(--blue); }
+  .state.process { background: var(--warning-light); border-color: #fcd34d; color: var(--warning); }
+  .state.done    { background: var(--success-light); border-color: #86efac; color: var(--success); }
+  .state.up      { background: var(--danger-light); border-color: #fca5a5; color: var(--danger); }
+  .state-arrow   { color: var(--muted); font-size: 14px; }
+  .state-note    { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+  /* ─── 建设规划时间线 ─── */
+  .timeline { margin-top: 12px; }
+  .tl-item {
+    display: flex; gap: 16px; margin-bottom: 16px;
+  }
+  .tl-dot-col { display: flex; flex-direction: column; align-items: center; }
+  .tl-dot {
+    width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; margin-top: 3px;
+  }
+  .tl-line { width: 2px; flex: 1; background: var(--border); margin-top: 4px; }
+  .tl-content h4 { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .tl-content ul  { list-style: disc; padding-left: 16px; }
+  .tl-content ul li { font-size: 12px; color: var(--muted); margin-bottom: 3px; }
+
+  /* ─── 决策记录 ─── */
+  .decision-row {
+    display: flex; gap: 12px; padding: 10px 12px;
+    border-bottom: 1px solid var(--border); align-items: flex-start;
+  }
+  .decision-row:last-child { border-bottom: none; }
+  .decision-point { font-size: 12px; font-weight: 600; color: var(--text); width: 160px; flex-shrink: 0; }
+  .decision-value { font-size: 12px; color: var(--text); width: 200px; flex-shrink: 0; }
+  .decision-reason{ font-size: 12px; color: var(--muted); flex: 1; }
+
+  /* ─── 员工端业绩模块预览 ─── */
+  .perf-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-top: 12px; }
+  .perf-card {
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 14px 16px; display: flex; align-items: center; gap: 12px;
+    cursor: pointer; transition: all .15s;
+  }
+  .perf-card:hover { border-color: rgba(99,102,241,.3); box-shadow: var(--shadow-md); }
+  .perf-card .icon { font-size: 24px; }
+  .perf-card h4 { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .perf-card p  { font-size: 11px; color: var(--muted); }
+
+  /* ─── AI 团队卡片 ─── */
+  .ai-team { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-top: 12px; }
+  .ai-card {
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 14px; display: flex; align-items: center; gap: 12px;
+    cursor: pointer; transition: all .15s; position: relative; overflow: hidden;
+  }
+  .ai-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+  .ai-card .ai-avatar {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .ai-card h4 { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+  .ai-card p  { font-size: 11px; color: var(--muted); line-height: 1.4; }
+  .ai-card .top-bar {
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    border-radius: 12px 12px 0 0;
+  }
+
+  /* ─── 支持端事项卡片 ─── */
+  .item-card {
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 14px; margin-bottom: 10px; transition: all .15s; cursor: pointer;
+  }
+  .item-card:hover { border-color: rgba(99,102,241,.3); box-shadow: var(--shadow); }
+  .item-card .item-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+  .item-card .item-title  { font-size: 13px; font-weight: 600; color: var(--text); }
+  .item-card .item-meta   { font-size: 11px; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  .item-card .ai-bar {
+    background: rgba(99,102,241,.05); border: 1px solid rgba(99,102,241,.12);
+    border-radius: 8px; padding: 7px 10px; font-size: 11px;
+    display: flex; align-items: flex-start; gap: 6px;
+  }
+  .ai-bar .ai-label { color: var(--primary); font-weight: 600; flex-shrink: 0; }
+  .ai-bar .ai-text  { color: var(--muted); flex: 1; }
+
+  /* ─── 风险预警卡片 ─── */
+  .risk-card {
+    border-radius: var(--radius-sm); padding: 12px 14px;
+    margin-bottom: 10px; border: 1px solid; display: flex; gap: 12px; align-items: flex-start;
+  }
+  .risk-card.high   { background: var(--danger-light);  border-color: rgba(239,68,68,.2); }
+  .risk-card.medium { background: var(--warning-light); border-color: rgba(245,158,11,.2); }
+  .risk-card.watch  { background: var(--blue-light);    border-color: rgba(59,130,246,.2); }
+  .risk-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+  .high   .risk-dot { background: var(--danger); }
+  .medium .risk-dot { background: var(--warning); }
+  .watch  .risk-dot { background: var(--blue); }
+  .risk-title { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+  .risk-desc  { font-size: 11px; color: var(--muted); line-height: 1.5; }
+
+  /* ─── 议题卡片（协同端） ─── */
+  .agenda-card {
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 14px; margin-bottom: 10px; display: flex; gap: 12px; cursor: pointer;
+    transition: all .15s;
+  }
+  .agenda-card:hover { border-color: rgba(99,102,241,.3); box-shadow: var(--shadow); }
+  .agenda-icon {
+    width: 36px; height: 36px; border-radius: 10px; display: flex;
+    align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0;
+  }
+  .agenda-card .ag-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; color: var(--text); }
+  .agenda-card .ag-meta  { font-size: 11px; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+  .agenda-card .ag-desc  { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .ag-depts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .ag-dept  { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: var(--muted-bg); color: var(--muted); }
+
+  /* misc */
+  .divider { height: 1px; background: var(--border); margin: 24px 0; }
+  .row { display: flex; gap: 20px; }
+  .row > * { flex: 1; }
+  .col-3 { flex: 0 0 calc(33.33% - 14px); }
+  .col-2 { flex: 0 0 calc(50% - 10px); }
+  code { background: var(--muted-bg); padding: 1px 5px; border-radius: 4px; font-size: 12px; font-family: monospace; }
+  .page-footer { padding: 20px 48px; border-top: 1px solid var(--border); background: var(--card); font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- ══════════ 页眉 ══════════ -->
+<div class="page-header">
+  <h1>业务支持端 &amp; 协同端 — 设计方案 <span class="badge">V3</span></h1>
+  <p>基于 630智能体项目进展汇报会议纪要（2026-05-18）· 更新日期：2026-05-20</p>
+</div>
+
+<!-- ══════════ 主 Tab 导航 ══════════ -->
+<nav class="main-tabs" id="mainTabs">
+  <button class="active" data-tab="overview">整体架构</button>
+  <button data-tab="employee">员工端</button>
+  <button data-tab="support">业务支持端</button>
+  <button data-tab="collab">协同端</button>
+  <button data-tab="datamodel">数据模型</button>
+  <button data-tab="roadmap">建设规划</button>
+</nav>
+
+<!-- ══════════ 内容区 ══════════ -->
+<div class="main-content">
+
+  <!-- ────── TAB 1：整体架构 ────── -->
+  <div class="tab-panel active" id="panel-overview">
+
+    <div class="card">
+      <div class="section-title"><div class="dot"></div>三端定位</div>
+      <table>
+        <tr>
+          <th>端</th><th>角色</th><th>用户</th><th>核心职责</th>
+        </tr>
+        <tr>
+          <td><span class="badge badge-blue">员工端</span>（已建）</td>
+          <td>业务助理机器人</td>
+          <td>一线业务人员</td>
+          <td>通过AI团队完成日常业务，含业绩与绩效查看</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-orange">业务支持端</span>（新建）</td>
+          <td>各条线支持中心看板</td>
+          <td>质控/复核等支持岗位人员</td>
+          <td>统一汇聚入口，管业务动作，不管人；含风险预警</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-danger">协同端</span>（新建）</td>
+          <td>圆桌会议跨部门协同</td>
+          <td>高级领导</td>
+          <td>以议题/项目为单元，协调跨部门资源和重大事项</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="section-title"><div class="dot"></div>三端关系架构图</div>
+      <div class="arch-grid">
+        <!-- 员工端 -->
+        <div class="arch-col employee">
+          <h3 style="color:#1d4ed8">员工端（已建）</h3>
+          <div class="arch-role">一线业务人员 · 业务助理机器人</div>
+          <ul>
+            <li>🏆 业绩与绩效（可收起）</li>
+            <li>🤖 AI 团队 4张卡片</li>
+            <li style="font-size:11px;color:#6b7280">客户分析 / 业务分析 / 方案生成 / 客户服务</li>
+            <li>💬 对话工作台</li>
+          </ul>
+          <div class="sub-box sub-box-blue">输入框占位符：<br/>开启我的一人团队工作台</div>
+        </div>
+        <div class="arch-arrow">⟷</div>
+        <!-- 业务支持端 -->
+        <div class="arch-col support">
+          <h3 style="color:#c2410c">业务支持端（新建）</h3>
+          <div class="arch-role">支持岗位人员 · 各条线支持中心</div>
+          <ul>
+            <li>🧠 7个智能体入口（同员工端风格）</li>
+            <li>⚠️ 风险提示 Tab（平铺展示）</li>
+            <li>📋 事项列表 Tab（含筛选）</li>
+            <li>📂 工作队列侧边栏（默认收起）</li>
+          </ul>
+          <div class="sub-box sub-box-orange">事项来源：员工主动提交 / 规则触发 / 主动介入</div>
+        </div>
+        <div class="arch-arrow">⟷</div>
+        <!-- 协同端 -->
+        <div class="arch-col collab">
+          <h3 style="color:#b91c1c">协同端（新建）</h3>
+          <div class="arch-role">高级领导 · 圆桌议题工作面板</div>
+          <ul>
+            <li>📋 请示事项（默认首屏）</li>
+            <li>📊 经营看板</li>
+            <li>🛡️ 风险提示</li>
+            <li>👥 队伍状况</li>
+            <li>🚨 应急组织</li>
+          </ul>
+          <div class="sub-box" style="background:#fef2f2;border-color:#fca5a5;color:#b91c1c">整体页面自然上下滚动，无吸顶区域</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding:12px 14px;background:var(--primary-light);border-radius:var(--radius-sm);font-size:12px;color:var(--primary);border:1px solid #a5b4fc">
+        🤖 <strong>AI 预判预处理层（贯穿三端）</strong>：所有事项进入支持端前 AI 已完成数据完整度检测、异常识别、历史案例匹配、优先级定级、建议动作输出
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="section-title"><div class="dot"></div>三个业务闭环</div>
+
+      <div class="loop-row">
+        <div class="loop-label"><div class="num">1</div>员工独立完成（最常见）</div>
+        <div class="flow">
+          <div class="flow-step primary">员工发起业务</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step primary">AI智能体处理</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step success">员工确认/输出</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step success">完成</div>
+        </div>
+        <div class="loop-desc">支持端在后台自动感知，不介入处理</div>
+      </div>
+
+      <div class="loop-row">
+        <div class="loop-label"><div class="num">2</div>员工 → 支持中心协同（需质控/复核）</div>
+        <div class="flow">
+          <div class="flow-step primary">员工主动提交事项</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step orange">AI预判+分类路由</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step warning">支持中心看板接单</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step teal">质控/复核决策</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step success">完成</div>
+        </div>
+        <div class="loop-desc">支持端也可主动前置介入，无需等员工提交</div>
+      </div>
+
+      <div class="loop-row">
+        <div class="loop-label"><div class="num">3</div>支持中心 → 圆桌会议协同（跨部门/资源申请）</div>
+        <div class="flow">
+          <div class="flow-step warning">支持端/员工提请协同</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step orange">规则研判+议题生成</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step danger">圆桌会议议题</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step primary">高级领导决策</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step success">指令下发至相关端</div>
+        </div>
+        <div class="loop-desc">三端可并行触发，员工也可直接越级提请协同端</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="section-title"><div class="dot"></div>重要设计原则</div>
+      <table>
+        <tr><th>原则</th><th>说明</th></tr>
+        <tr><td>三端不是三个隔离系统</td><td>同一平台三类角色视图，通过统一的事项/议题数据流连通</td></tr>
+        <tr><td>不要线性串联，要平行可交叉</td><td>三个闭环可并行触发，员工也可直接越级提请协同端</td></tr>
+        <tr><td>业务支持中心不管人，只管业务和动作</td><td>人员组织属于 HR 和团队长管理范畴，页面不展示人员组织架构</td></tr>
+        <tr><td>以议题/项目为单元</td><td>协同端处理聚合的跨部门问题，而非原子事项</td></tr>
+        <tr><td>AI 预判前置</td><td>所有事项进入支持端前 AI 已完成预处理，减少重复判断</td></tr>
+        <tr><td>subject 三层无歧义</td><td>对象-动作-结果结构化描述，大模型无法处理模糊表述</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ────── TAB 2：员工端 ────── -->
+  <div class="tab-panel" id="panel-employee">
+
+    <div class="card">
+      <div class="section-title"><div class="dot"></div>页面布局（从上到下）</div>
+      <div class="flow" style="flex-direction:column;align-items:flex-start;gap:8px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="flow-step muted">① V3Header（展开态）</div>
+          <span style="font-size:12px;color:var(--muted)">Logo + Tab 导航 + 问候 + 7个业务助理头像行</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="flow-step warning">② 工作提示</div>
+          <span style="font-size:12px;color:var(--muted)">WorkTips 快捷入口</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="flow-step primary">③ 业绩与绩效</div>
+          <span style="font-size:12px;color:var(--muted)">默认收起，点击展开；含业绩看板（3指标卡）+ 预计绩效收入</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="flow-step teal">④ AI 团队</div>
+          <span style="font-size:12px;color:var(--muted)">2×2 网格，4张卡片</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="flow-step success">⑤ 对话输入框</div>
+          <span style="font-size:12px;color:var(--muted)">占位符：开启我的一人团队工作台</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="section-title"><div class="dot"></div>业绩与绩效板块（默认收起）</div>
+      <div class="perf-grid">
+        <div class="perf-card"><div class="icon">💰</div><div><h4>客户总资产</h4><p>点击选择时间段查看明细</p></div></div>
+        <div class="perf-card"><div class="icon">📈</div><div><h4>客户带来的总收入</h4><p>点击选择时间段查看明细</p></div></div>
+        <div class="perf-card"><div class="icon">💵</div><div><h4>维护客户的总成本</h4><p>点击选择时间段查看明细</p></div></div>
+      </div>
+      <div style="margin-top:14px;padding:14px 16px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border)">
+        <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:var(--muted)">预计绩效收入</div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <span style="font-size:12px;color:var(--muted)">选择时间段：</span>
+          <code>2026-01-01</code>
+          <span style="font-size:12px;color:var(--muted)">至</span>
+          <code>2026-01-31</code>
+          <span style="padding:4px 14px;background:#d97706;border-radius:8px;color:#fff;font-size:12px;font-weight:500">计算</span>
+          <div style="margin-left:auto;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 14px;min-width:180px">
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+              <span style="color:var(--muted)">客户带来的收入</span>
+              <span style="font-weight:700">30万元</span>
+            </div>
+            <div style="height:1px;background:var(--border);margin:4px 0"></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px">
+              <span style="color:var(--muted)">预计可获得绩效奖金</span>
+              <span style="font-weight:700;color:#d97706">6万元</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="section-title"><div class="dot"></div>AI 团队（2×2 网格）</div>
+      <div class="ai-team">
+        <div class="ai-card">
+          <div class="top-bar" style="background:linear-gradient(90deg,#3b82f6,#6366f1)"></div>
+          <div class="ai-avatar" style="background:linear-gradient(135deg,#3b82f6,#6366f1)">👥</div>
+          <div><h4>客户分析</h4><p>全面分析客户资产负债、现金流、资产配置三个本质维度</p></div>
+        </div>
+        <div class="ai-card">
+          <div class="top-bar" style="background:linear-gradient(90deg,#f97316,#f59e0b)"></div>
+          <div class="ai-avatar" style="background:linear-gradient(135deg,#f97316,#f59e0b)">🔍</div>
+          <div><h4>业务分析</h4><p>挖掘业务机会，分析可行性与竞争态势</p></div>
+        </div>
+        <div class="ai-card">
+          <div class="top-bar" style="background:linear-gradient(90deg,#f59e0b,#eab308)"></div>
+          <div class="ai-avatar" style="background:linear-gradient(135deg,#f59e0b,#eab308)">📄</div>
+          <div><h4>方案生成</h4><p>基于客户分析结果快速生成个性化业务方案</p></div>
+        </div>
+        <div class="ai-card">
+          <div class="top-bar" style="background:linear-gradient(90deg,#8b5cf6,#a78bfa)"></div>
+          <div class="ai-avatar" style="background:linear-gradient(135deg,#8b5cf6,#a78bfa)">🎧</div>
+          <div><h4>客户服务</h4><p>跟踪服务进度，高效做好客户日常维护</p></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ────── TAB 3：业务支持端 ────── -->
+  <div class="tab-panel" id="panel-support">
+
+    <div class="card">
+      <div class="section-title"><div class="dot"></div>页面布局（从上到下 / 左到右）</div>
+      <div class="row" style="gap:12px;align-items:flex-start">
+        <div style="flex:0 0 160px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;background:var(--bg)">
+          <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px">左侧侧边栏（默认收起 w-14）</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="height:32px;background:#e0e7ff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--primary)">● 全部</div>
+            <div style="height:32px;background:#fff7ed;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--orange)">● 资管</div>
+            <div style="height:32px;background:#eff6ff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--blue)">● 投行</div>
+            <div style="height:32px;background:#f0fdf4;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--success)">● 零售</div>
+          </div>
+        </div>
+        <div style="flex:1">
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px">
+            <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px">① 智能体入口行（7个，与员工端风格一致，无标题）</div>
+            <div style="display:flex;gap:12px">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:4px" v-for="n in 4">
+                <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);"></div>
+                <div style="font-size:10px;color:var(--muted)">XX助理</div>
+              </div>
+            </div>
+          </div>
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px">
+            <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px">② Tab 切换（带统计数字）</div>
+            <div style="display:flex;gap:0;border-bottom:1px solid var(--border)">
+              <div style="padding:8px 16px;font-size:12px;font-weight:600;color:var(--primary);border-bottom:2px solid var(--primary);display:flex;align-items:center;gap:6px">
+                风险提示 <span class="badge badge-danger">5</span>
+              </div>
+              <div style="padding:8px 16px;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px">
+                事项列表 <span class="badge badge-muted">7</span>
+              </div>
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--muted);padding:4px 0">Tab 内容区：风险提示平铺展示 / 事项列表含筛选按钮</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="section-title"><div class="dot"></div>风险提示 Tab — 平铺展示（无折叠头部）</div>
+      <div class="section-subtitle">AI 基于当前事项自动识别，条目直接平铺，无汇总摘要头部</div>
+
+      <div class="risk-card high">
+        <div class="risk-dot"></div>
+        <div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+            <span class="badge badge-danger" style="font-size:10px">高风险</span>
+            <span class="badge badge-orange" style="font-size:10px">资管</span>
+            <span class="risk-title">贵州茅台定增方案资产负债率持续偏高</span>
+          </div>
+          <div class="risk-desc">连续2季度超75%，应付账款账期延长，资金压力信号明显，需在方案推进前完成客观数据核查</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <span style="padding:4px 8px;border-radius:6px;background:var(--danger-light);color:var(--danger);font-size:11px;font-weight:600;border:1px solid rgba(239,68,68,.2);cursor:pointer">立即处置</span>
+          <span style="padding:4px 8px;border-radius:6px;background:var(--muted-bg);color:var(--muted);font-size:11px;cursor:pointer">关联事项</span>
+        </div>
+      </div>
+
+      <div class="risk-card medium">
+        <div class="risk-dot"></div>
+        <div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+            <span class="badge badge-warning" style="font-size:10px">中风险</span>
+            <span class="badge badge-blue" style="font-size:10px">投行</span>
+            <span class="risk-title">IPO准入申请现金流量表缺失</span>
+          </div>
+          <div class="risk-desc">材料完整度92%，关键财务数据不全，若进入复核流程后被退回将影响准入时效</div>
+        </div>
+        <div style="flex-shrink:0">
+          <span style="padding:4px 8px;border-radius:6px;background:var(--muted-bg);color:var(--muted);font-size:11px;cursor:pointer">关联事项</span>
+        </div>
+      </div>
+
+      <div class="risk-card watch">
+        <div class="risk-dot"></div>
+        <div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+            <span class="badge badge-blue" style="font-size:10px">关注</span>
+            <span class="badge badge-success" style="font-size:10px">零售</span>
+            <span class="risk-title">高净值客户资产异常转移监控</span>
+          </div>
+          <div class="risk-desc">5位客户近30天资产变动超40%，存在潜在流失风险，当前仍在监控观察阶段</div>
+        </div>
+        <div style="flex-shrink:0">
+          <span style="padding:4px 8px;border-radius:6px;background:var(--muted-bg);color:var(--muted);font-size:11px;cursor:pointer">关联事项</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="section-title"><div class="dot"></div>事项列表 Tab — 事项卡片示例</div>
+      <div class="item-card">
+        <div class="item-header">
+          <span class="badge badge-danger">紧急</span>
+          <span class="badge badge-danger" style="font-size:10px">⚠ 高风险</span>
+          <span style="font-size:12px;font-weight:600">刘韵与中信银行贵阳分行财务总监债券投资方案复核申请</span>
+          <span class="badge badge-orange">处理中</span>
+        </div>
+        <div class="item-meta">
+          <span style="color:var(--primary);font-weight:500">员工提交</span>
+          <span>·</span>
+          <span class="badge badge-orange" style="font-size:10px">资管</span>
+          <span class="badge badge-muted" style="font-size:10px">方案生成</span>
+          <span>·</span>
+          <span>张丽华</span>
+          <span>·</span>
+          <span>2026-05-18 09:32</span>
+        </div>
+        <div class="ai-bar">
+          <span class="ai-label">AI预判</span>
+          <span class="ai-text">现金流量表数据缺失，资产负债率连续2期超75%，历史案例相似度82%（2024Q3贵州茅台项目）</span>
+          <span class="badge badge-warning" style="margin-left:auto;flex-shrink:0">建议补录数据</span>
+        </div>
+      </div>
+
+      <div class="item-card">
+        <div class="item-header">
+          <span class="badge badge-warning">待办</span>
+          <span style="font-size:12px;font-weight:600">零售大客户Q3专属产品方案准入复核</span>
+        </div>
+        <div class="item-meta">
+          <span style="color:var(--success);font-weight:500">主动介入</span>
+          <span>·</span>
+          <span class="badge badge-success" style="font-size:10px">零售</span>
+          <span class="badge badge-muted" style="font-size:10px">业务分析</span>
+          <span>·</span>
+          <span>李明</span>
+          <span>·</span>
+          <span>2026-05-18 10:15</span>
+        </div>
+        <div class="ai-bar">
+          <span class="ai-label">AI预判</span>
+          <span class="ai-text">材料完整度100%，风险等级正常，历史同类项目成功率95%</span>
+          <span class="badge badge-success" style="margin-left:auto;flex-shrink:0">可直接处理</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="section-title"><div class="dot"></div>事项来源 & AI 预处理规则</div>
+      <table>
+        <tr><th>来源类型</th><th>触发方式</th><th>进入队列</th></tr>
+        <tr><td>员工主动提交</td><td>员工在员工端点击"提交事项"</td><td>待处理队列</td></tr>
+        <tr><td>规则自动触发</td><td>业务指标异常/阈值触发</td><td>关注队列（知会，暂不处理）</td></tr>
+        <tr><td>支持人员主动发现</td><td>支持人员在监控中主动介入</td><td>处理中队列</td></tr>
+      </table>
+      <table style="margin-top:12px">
+        <tr><th>AI 预处理项</th><th>说明</th></tr>
+        <tr><td>数据完整度检测</td><td>识别缺失的关键数据（资产负债/现金流等核心维度）</td></tr>
+        <tr><td>异常识别</td><td>基于客观指标检测异常（不使用主观评价）</td></tr>
+        <tr><td>历史案例匹配</td><td>相似案例相似度匹配</td></tr>
+        <tr><td>优先级自动定级</td><td>紧急 / 普通 / 关注（规则自动判定）</td></tr>
+        <tr><td>建议动作输出</td><td>直接处理 / 补录数据 / 提请协同</td></tr>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- ────── TAB 4：协同端 ────── -->
+  <div class="tab-panel" id="panel-collab">
+
+    <div class="card">
+      <div class="section-title"><div class="dot"></div>五模块导航卡片（顶部，随整体页面自然滚动）</div>
+      <div class="section-subtitle">整个协同端页面整体上下滚动，无任何吸顶固定区域</div>
+      <div class="collab-nav" id="collabNav">
+        <div class="collab-nav-card active" data-panel="agenda">
+          <div class="accent-bar" style="background:linear-gradient(90deg,#f97316,#f59e0b)"></div>
+          <div class="cn-icon">📋</div>
+          <div class="cn-title">请示事项 <span class="badge badge-danger" style="font-size:10px">8项待处理</span></div>
+          <div class="cn-sub">审批待办、请示流转、签署确认</div>
+        </div>
+        <div class="collab-nav-card" data-panel="business">
+          <div class="accent-bar" style="background:linear-gradient(90deg,#22c55e,#14b8a6)"></div>
+          <div class="cn-icon">📊</div>
+          <div class="cn-title">经营看板 <span class="badge badge-success" style="font-size:10px">营收+12.3%</span></div>
+          <div class="cn-sub">经营指标、业绩趋势、目标达成</div>
+        </div>
+        <div class="collab-nav-card" data-panel="risk">
+          <div class="accent-bar" style="background:linear-gradient(90deg,#ef4444,#f97316)"></div>
+          <div class="cn-icon">🛡️</div>
+          <div class="cn-title">风险提示 <span class="badge badge-danger" style="font-size:10px">3项高风险</span></div>
+          <div class="cn-sub">合规风险、操作风险、市场风险预警</div>
+        </div>
+        <div class="collab-nav-card" data-panel="team">
+          <div class="accent-bar" style="background:linear-gradient(90deg,#8b5cf6,#a78bfa)"></div>
+          <div class="cn-icon">👥</div>
+          <div class="cn-title">队伍状况 <span class="badge badge-warning" style="font-size:10px">5人变动</span></div>
+          <div class="cn-sub">人员变动、绩效分布、核心骨干</div>
+        </div>
+        <div class="collab-nav-card" data-panel="emergency">
+          <div class="accent-bar" style="background:linear-gradient(90deg,#3b82f6,#6366f1)"></div>
+          <div class="cn-icon">🚨</div>
+          <div class="cn-title">应急组织 <span class="badge badge-success" style="font-size:10px">运行正常</span></div>
+          <div class="cn-sub">应急预案、突发事件、演练状态</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 请示事项面板 -->
+    <div class="collab-panel active card" id="cp-agenda" style="margin-top:16px">
+      <div class="section-title"><div class="dot"></div>请示事项（默认首屏）</div>
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+        <div style="display:flex;gap:6px">
+          <span class="badge badge-danger">高优 3</span>
+          <span class="badge badge-warning">进行中 4</span>
+          <span class="badge badge-blue">规则知会 2</span>
+          <span class="badge badge-muted">议题总数 7</span>
+        </div>
+        <button style="margin-left:auto;padding:6px 14px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer">+ 发起议题</button>
+      </div>
+      <div class="agenda-card">
+        <div class="agenda-icon" style="background:#fff7ed">⚡</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+            <div class="ag-title">资管-投行双条线客户策略冲突协调</div>
+            <span class="badge badge-danger">高优</span>
+          </div>
+          <div class="ag-meta">
+            <span style="color:var(--danger);font-weight:500">事项升级</span>
+            <span>·</span><span>王总监</span>
+            <span>·</span><span>2026-05-17 14:30</span>
+            <span>·</span><span style="color:var(--warning);font-weight:500">🔵 讨论中</span>
+          </div>
+          <div class="ag-desc">资管与投行条线在贵州茅台项目的客户服务策略存在重大冲突，对客口径未统一，已影响两个部门正常业务推进，需高级领导协调裁决</div>
+          <div class="ag-depts">
+            <span class="ag-dept">资管条线</span>
+            <span class="ag-dept">投行条线</span>
+            <span class="ag-dept">合规部</span>
+            <span style="font-size:11px;padding:2px 8px;border-radius:4px;background:var(--primary-light);color:var(--primary)">张总</span>
+          </div>
+        </div>
+      </div>
+      <div class="agenda-card">
+        <div class="agenda-icon" style="background:#f0fdf4">📊</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+            <div class="ag-title">630节点AI算力资源扩充申请</div>
+            <span class="badge badge-warning">中优</span>
+          </div>
+          <div class="ag-meta">
+            <span style="color:var(--primary);font-weight:500">主动发起</span>
+            <span>·</span><span>科技部李总</span>
+            <span>·</span><span>2026-05-16 09:00</span>
+            <span>·</span><span style="color:var(--muted);font-weight:500">⏳ 待讨论</span>
+          </div>
+          <div class="ag-desc">三端智能体工作台并发用量预计Q3达现有算力的3.2倍，需提前规划扩容，建议决策是否在630节点前完成算力采购</div>
+          <div class="ag-depts">
+            <span class="ag-dept">科技部</span>
+            <span class="ag-dept">资管条线</span>
+            <span class="ag-dept">财务部</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 经营看板面板 -->
+    <div class="collab-panel card" id="cp-business" style="margin-top:16px">
+      <div class="section-title"><div class="dot"></div>经营看板</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">本月总营收</div>
+          <div style="font-size:22px;font-weight:700">¥5,800万</div>
+          <div style="font-size:12px;color:var(--success);display:flex;align-items:center;gap:4px">↑ +12.3%</div>
+        </div>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">净利润</div>
+          <div style="font-size:22px;font-weight:700">¥1,680万</div>
+          <div style="font-size:12px;color:var(--success);display:flex;align-items:center;gap:4px">↑ +8.7%</div>
+        </div>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">客户总量</div>
+          <div style="font-size:22px;font-weight:700">12,458</div>
+          <div style="font-size:12px;color:var(--success);display:flex;align-items:center;gap:4px">↑ +256</div>
+        </div>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Q2目标完成率</div>
+          <div style="font-size:22px;font-weight:700">78.5%</div>
+          <div style="font-size:12px;color:var(--danger);display:flex;align-items:center;gap:4px">↓ -2.1%</div>
+        </div>
+      </div>
+      <div style="background:var(--primary-light);border:1px solid #a5b4fc;border-radius:var(--radius-sm);padding:12px 14px">
+        <div style="font-size:12px;font-weight:600;color:var(--primary);margin-bottom:8px">🤖 AI 建议</div>
+        <div style="font-size:12px;color:var(--text);display:flex;flex-direction:column;gap:4px">
+          <div><span style="color:var(--primary);font-weight:700">1.</span> 目标完成率下降2.1%，主因西南分中心进度滞后，建议安排专项督导</div>
+          <div><span style="color:var(--primary);font-weight:700">2.</span> 营收增长强劲但利润率增速放缓，关注成本控制</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 其他面板占位 -->
+    <div class="collab-panel card" id="cp-risk" style="margin-top:16px">
+      <div class="section-title"><div class="dot"></div>风险提示</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+        <div style="padding:14px;border-radius:var(--radius-sm);background:var(--danger-light);border:1px solid rgba(239,68,68,.2)"><div style="font-size:22px;font-weight:700;color:var(--danger)">3</div><div style="font-size:12px;color:var(--muted)">高风险</div></div>
+        <div style="padding:14px;border-radius:var(--radius-sm);background:var(--warning-light);border:1px solid rgba(245,158,11,.2)"><div style="font-size:22px;font-weight:700;color:var(--warning)">5</div><div style="font-size:12px;color:var(--muted)">中风险</div></div>
+        <div style="padding:14px;border-radius:var(--radius-sm);background:var(--success-light);border:1px solid rgba(34,197,94,.2)"><div style="font-size:22px;font-weight:700;color:var(--success)">12</div><div style="font-size:12px;color:var(--muted)">本月已化解</div></div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">（详细风险列表与 AI 建议同业务支持端风险提示 Tab 结构一致，此处省略）</div>
+    </div>
+    <div class="collab-panel card" id="cp-team" style="margin-top:16px">
+      <div class="section-title"><div class="dot"></div>队伍状况</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+        <div style="padding:14px;border-radius:var(--radius-sm);background:var(--bg);border:1px solid var(--border)"><div style="font-size:22px;font-weight:700">386人</div><div style="font-size:12px;color:var(--muted)">在职总人数</div><div style="font-size:11px;color:var(--success)">本月净增+5</div></div>
+        <div style="padding:14px;border-radius:var(--radius-sm);background:var(--bg);border:1px solid var(--border)"><div style="font-size:22px;font-weight:700">8人</div><div style="font-size:12px;color:var(--muted)">本月入职</div></div>
+        <div style="padding:14px;border-radius:var(--radius-sm);background:var(--bg);border:1px solid var(--border)"><div style="font-size:22px;font-weight:700">3人</div><div style="font-size:12px;color:var(--muted)">本月离职</div></div>
+        <div style="padding:14px;border-radius:var(--radius-sm);background:var(--bg);border:1px solid var(--border)"><div style="font-size:22px;font-weight:700">96.2%</div><div style="font-size:12px;color:var(--muted)">整体出勤率</div><div style="font-size:11px;color:var(--success)">+0.3%</div></div>
+      </div>
+    </div>
+    <div class="collab-panel card" id="cp-emergency" style="margin-top:16px">
+      <div class="section-title"><div class="dot"></div>应急组织</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+        <div style="padding:14px;border-radius:var(--radius-sm);background:var(--bg);border:1px solid var(--border)"><div style="font-size:22px;font-weight:700">15项</div><div style="font-size:12px;color:var(--muted)">应急预案总数</div></div>
+        <div style="padding:14px;border-radius:var(--radius-sm);background:var(--bg);border:1px solid var(--border)"><div style="font-size:22px;font-weight:700;color:var(--success)">2次</div><div style="font-size:12px;color:var(--muted)">本月完成演练</div></div>
+        <div style="padding:14px;border-radius:var(--radius-sm);background:var(--bg);border:1px solid var(--border)"><div style="font-size:22px;font-weight:700;color:var(--warning)">1项</div><div style="font-size:12px;color:var(--muted)">待处理事件</div></div>
+        <div style="padding:14px;border-radius:var(--radius-sm);background:var(--bg);border:1px solid var(--border)"><div style="font-size:22px;font-weight:700">15分钟</div><div style="font-size:12px;color:var(--muted)">平均响应时效</div></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="section-title"><div class="dot"></div>议题类型 & 触发规则</div>
+      <table>
+        <tr><th>议题类型</th><th>说明</th><th>示例</th></tr>
+        <tr><td>跨部门客户冲突</td><td>多条线共同客户策略不一致</td><td>资管投行双条线客户口径统一</td></tr>
+        <tr><td>资源申请</td><td>算力、预算、人员跨部门调配</td><td>630节点算力扩充申请</td></tr>
+        <tr><td>数据权限</td><td>跨条线数据访问权限授权</td><td>零售智能体数据权限申请</td></tr>
+        <tr><td>重大风险知会</td><td>AI监控发现的重大异常知会领导</td><td>IPO项目连续异常指标监控</td></tr>
+        <tr><td>制度/机制决策</td><td>需高层拍板的制度或机制调整</td><td>薪酬奖金方案、组织协同规则</td></tr>
+      </table>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="section-title"><div class="dot"></div>协同端核心流程</div>
+      <div class="flow">
+        <div class="flow-step warning">议题生成</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step orange">参与方召集</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step primary">圆桌讨论</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step danger">高级领导决策</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step teal">结构化指令下发</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step muted">执行追踪</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step success">关闭议题</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ────── TAB 5：数据模型 ────── -->
+  <div class="tab-panel" id="panel-datamodel">
+
+    <div class="card">
+      <div class="section-title"><div class="dot"></div>事项（WorkItem）— 员工端 ↔ 业务支持端</div>
+      <div class="model-block">
+        <h4>核心字段</h4>
+        <div class="field-row"><div class="field-name">item_id</div><div class="field-type">UUID</div><div class="field-desc">唯一标识</div></div>
+        <div class="field-row"><div class="field-name">source_type</div><div class="field-type">Enum</div><div class="field-desc">员工主动提交 / 规则触发 / 主动介入</div></div>
+        <div class="field-row"><div class="field-name">business_line</div><div class="field-type">Enum</div><div class="field-desc">资管 / 投行 / 零售</div></div>
+        <div class="field-row"><div class="field-name">business_stage</div><div class="field-type">Enum</div><div class="field-desc">客户分析 / 业务分析 / 方案生成 / 客户服务</div></div>
+        <div class="field-row"><div class="field-name">subject</div><div class="field-type">Object</div><div class="field-desc"><strong>对象-动作-结果</strong>（三层无歧义描述）</div></div>
+        <div class="field-row"><div class="field-name">ai_prejudge</div><div class="field-type">Object</div><div class="field-desc">AI预判结论 + 建议动作（直接处理/补录/提请协同）</div></div>
+        <div class="field-row"><div class="field-name">priority</div><div class="field-type">Enum</div><div class="field-desc">紧急 / 普通 / 关注（规则自动定级）</div></div>
+        <div class="field-row"><div class="field-name">status</div><div class="field-type">Enum</div><div class="field-desc">待处理 / 处理中 / 已完成 / 已升级协同</div></div>
+        <div class="field-row"><div class="field-name">risk_level</div><div class="field-type">Enum?</div><div class="field-desc">高风险 / 中风险 / 关注（AI 自动识别，可为空）</div></div>
+        <div class="field-row"><div class="field-name">escalate_to_agenda</div><div class="field-type">UUID?</div><div class="field-desc">关联的协同端议题ID（升级后填入）</div></div>
+      </div>
+      <div style="margin-top:12px;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">subject 三层无歧义结构示例</div>
+      <div class="json-block">
+<span class="json-muted">{</span>
+  <span class="json-key">"object"</span>: <span class="json-string">"华创证券资管条线-刘韵 与 中信银行贵阳分行-财务总监王某"</span>,
+  <span class="json-key">"action"</span>: <span class="json-string">"提交债券投资方案复核"</span>,
+  <span class="json-key">"result"</span>: <span class="json-string">"方案现金流数据缺失，待补录后重新提交"</span>
+<span class="json-muted">}</span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="section-title"><div class="dot"></div>议题（Agenda）— 业务支持端 ↔ 协同端</div>
+      <div class="model-block">
+        <h4>核心字段</h4>
+        <div class="field-row"><div class="field-name">agenda_id</div><div class="field-type">UUID</div><div class="field-desc">唯一标识</div></div>
+        <div class="field-row"><div class="field-name">trigger_type</div><div class="field-type">Enum</div><div class="field-desc">主动发起 / 规则知会 / 事项升级</div></div>
+        <div class="field-row"><div class="field-name">topic</div><div class="field-type">String</div><div class="field-desc">议题标题</div></div>
+        <div class="field-row"><div class="field-name">agenda_type</div><div class="field-type">Enum</div><div class="field-desc">跨部门冲突 / 资源申请 / 数据权限 / 风险知会 / 制度决策</div></div>
+        <div class="field-row"><div class="field-name">dept_involved</div><div class="field-type">Array</div><div class="field-desc">涉及部门列表</div></div>
+        <div class="field-row"><div class="field-name">coordinators</div><div class="field-type">Array</div><div class="field-desc">参与协调的高级领导</div></div>
+        <div class="field-row"><div class="field-name">decision</div><div class="field-type">Object</div><div class="field-desc">决策内容 + 指令</div></div>
+        <div class="field-row"><div class="field-name">instructions</div><div class="field-type">Array</div><div class="field-desc">下发给各端的具体结构化指令（含截止日期、责任部门、追踪状态）</div></div>
+        <div class="field-row"><div class="field-name">tracking_status</div><div class="field-type">Enum</div><div class="field-desc">待讨论 / 讨论中 / 已决策 / 已下发 / 执行追踪 / 关闭</div></div>
+        <div class="field-row"><div class="field-name">priority</div><div class="field-type">Enum</div><div class="field-desc">高优 / 中优 / 知会</div></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="section-title"><div class="dot"></div>状态流转</div>
+      <div style="margin-bottom:8px;font-size:12px;font-weight:600;color:var(--muted)">事项状态机</div>
+      <div class="state-machine">
+        <div class="state start">员工提交/规则触发</div>
+        <span class="state-arrow">→</span>
+        <div class="state start">AI预处理</div>
+        <span class="state-arrow">→</span>
+        <div class="state process">待处理</div>
+        <span class="state-arrow">→</span>
+        <div class="state process">处理中</div>
+        <span class="state-arrow">→</span>
+        <div class="state done">已完成</div>
+      </div>
+      <div class="state-machine" style="margin-top:6px">
+        <div class="state process">处理中（需协同）</div>
+        <span class="state-arrow">→</span>
+        <div class="state up">已升级协同</div>
+        <span class="state-arrow">→</span>
+        <div class="state start">生成议题</div>
+      </div>
+
+      <div style="margin-top:14px;margin-bottom:8px;font-size:12px;font-weight:600;color:var(--muted)">议题状态机</div>
+      <div class="state-machine">
+        <div class="state start">议题生成</div>
+        <span class="state-arrow">→</span>
+        <div class="state process">待讨论</div>
+        <span class="state-arrow">→</span>
+        <div class="state process">讨论中</div>
+        <span class="state-arrow">→</span>
+        <div class="state process">已决策</div>
+        <span class="state-arrow">→</span>
+        <div class="state up">已下发</div>
+        <span class="state-arrow">→</span>
+        <div class="state process">执行追踪</div>
+        <span class="state-arrow">→</span>
+        <div class="state done">关闭</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ────── TAB 6：建设规划 ────── -->
+  <div class="tab-panel" id="panel-roadmap">
+
+    <div class="card">
+      <div class="section-title"><div class="dot"></div>阶段规划</div>
+      <div class="timeline">
+        <div class="tl-item">
+          <div class="tl-dot-col">
+            <div class="tl-dot" style="background:var(--danger)"></div>
+            <div class="tl-line"></div>
+          </div>
+          <div class="tl-content">
+            <h4>近期（630节点前） <span class="badge badge-danger" style="font-size:10px">优先级最高</span></h4>
+            <ul>
+              <li>员工端：业绩与绩效板块（可收起）+ AI 团队 4 卡片 + 对话工作台</li>
+              <li>业务支持端 MVP：智能体入口行 + 风险提示 Tab + 事项列表 Tab + 可折叠工作队列</li>
+              <li>协同端 MVP：5模块导航 + 请示事项（议题列表+详情+知会+决策下发）</li>
+              <li>AI 预处理层：数据完整度 + 异常识别 + 优先级定级 + 建议动作</li>
+            </ul>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot-col">
+            <div class="tl-dot" style="background:var(--warning)"></div>
+            <div class="tl-line"></div>
+          </div>
+          <div class="tl-content">
+            <h4>中期 <span class="badge badge-warning" style="font-size:10px">能力深化</span></h4>
+            <ul>
+              <li>三端数据互通：事项状态实时同步、指令下发追踪</li>
+              <li>各条线支持中心独立视图配置</li>
+              <li>规则引擎配置界面（业务支持端触发规则可配置）</li>
+              <li>协同端经营看板、风险提示、队伍状况、应急组织数据实时接入</li>
+            </ul>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot-col">
+            <div class="tl-dot" style="background:var(--success)"></div>
+          </div>
+          <div class="tl-content">
+            <h4>远期 <span class="badge badge-success" style="font-size:10px">平台化</span></h4>
+            <ul>
+              <li>跨条线数据分析：支持端处理效率分析、事项类型分析</li>
+              <li>协同端决策历史库：形成公司级决策知识沉淀</li>
+              <li>对外输出能力：投行/资管服务能力平台化输出</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="section-title"><div class="dot"></div>关键设计决策记录</div>
+      <div style="background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border);overflow:hidden">
+        <div class="decision-row" style="background:var(--muted-bg)">
+          <div class="decision-point" style="font-size:11px;font-weight:700;color:var(--muted)">决策点</div>
+          <div class="decision-value" style="font-size:11px;font-weight:700;color:var(--muted)">决策</div>
+          <div class="decision-reason" style="font-size:11px;font-weight:700;color:var(--muted)">原因</div>
+        </div>
+        <div class="decision-row"><div class="decision-point">"工单"→"事项"</div><div class="decision-value">统一使用"事项"</div><div class="decision-reason">符合公司业务语言习惯，避免系统感过强</div></div>
+        <div class="decision-row"><div class="decision-point">支持端不管人</div><div class="decision-value">只展示业务事项和动作</div><div class="decision-reason">人员组织属于HR和团队长管理范畴，明确指示不在此处展示</div></div>
+        <div class="decision-row"><div class="decision-point">协同端以议题为单元</div><div class="decision-value">不以单条事项为单位</div><div class="decision-reason">协同端处理的是聚合的跨部门问题，非原子事项</div></div>
+        <div class="decision-row"><div class="decision-point">三端可并行触发</div><div class="decision-value">员工可直接越级提请协同端</div><div class="decision-reason">不强制串联，避免流程瓶颈</div></div>
+        <div class="decision-row"><div class="decision-point">业务支持端 Tab 分区</div><div class="decision-value">风险提示/事项列表 两个Tab，Tab带数字统计</div><div class="decision-reason">风险防控意识强，单独Tab突出；避免页面信息量过载</div></div>
+        <div class="decision-row"><div class="decision-point">工作队列默认收起</div><div class="decision-value">左侧侧边栏 w-14 收起态</div><div class="decision-reason">队列不需要始终可见，减少视觉干扰，需要时展开</div></div>
+        <div class="decision-row"><div class="decision-point">业绩板块默认收起</div><div class="decision-value">员工端进入后业绩板块折叠</div><div class="decision-reason">员工端首屏聚焦业务，业绩数据按需查看</div></div>
+        <div class="decision-row"><div class="decision-point">协同端整体自然滚动</div><div class="decision-value">无任何吸顶/固定区域</div><div class="decision-reason">高级领导需要整体感知所有内容，不希望被局部滚动分割视野</div></div>
+        <div class="decision-row"><div class="decision-point">智能体入口统一风格</div><div class="decision-value">员工端/业务支持端均用头像行</div><div class="decision-reason">统一操作心智模型，降低学习成本</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="page-footer">
+  业务支持端 &amp; 协同端 设计方案 V3 · 基于 630智能体项目进展汇报会议纪要（2026-05-18）· 更新于 2026-05-20
+</div>
+
+<script>
+// ─── 主 Tab 切换 ───
+document.querySelectorAll('#mainTabs button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
+    document.querySelectorAll('#mainTabs button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + tab).classList.add('active');
+  });
+});
+
+// ─── 协同端五模块切换 ───
+document.querySelectorAll('#collabNav .collab-nav-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const panel = card.dataset.panel;
+    document.querySelectorAll('#collabNav .collab-nav-card').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.collab-panel').forEach(p => p.classList.remove('active'));
+    card.classList.add('active');
+    document.getElementById('cp-' + panel).classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

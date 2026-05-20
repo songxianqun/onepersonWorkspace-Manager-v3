@@ -1,0 +1,157 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    /* Core palette - warm orange/amber theme */
+    --background: 36 33% 97%;
+    --foreground: 20 14% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 20 14% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 14% 12%;
+
+    /* Primary: warm amber-orange */
+    --primary: 28 85% 55%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 32 90% 65%;
+
+    /* Secondary: warm neutral */
+    --secondary: 30 20% 95%;
+    --secondary-foreground: 20 14% 25%;
+
+    --muted: 30 15% 93%;
+    --muted-foreground: 20 10% 50%;
+
+    --accent: 30 30% 93%;
+    --accent-foreground: 20 14% 15%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 30 15% 90%;
+    --input: 30 15% 88%;
+    --ring: 28 85% 55%;
+    --radius: 0.75rem;
+
+    /* Extended semantic colors */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --success: 152 60% 42%;
+    --success-foreground: 0 0% 100%;
+
+    --danger: 0 72% 55%;
+    --danger-foreground: 0 0% 100%;
+
+    /* Sidebar */
+    --sidebar-bg: 25 20% 18%;
+    --sidebar-foreground: 30 20% 85%;
+    --sidebar-active: 28 85% 55%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(28, 85%, 55%), hsl(32, 90%, 65%));
+    --gradient-warm: linear-gradient(135deg, hsl(28, 85%, 55%), hsl(15, 80%, 55%));
+    --gradient-subtle: linear-gradient(180deg, hsl(36, 33%, 97%), hsl(30, 20%, 95%));
+    --gradient-sidebar: linear-gradient(180deg, hsl(25, 25%, 16%), hsl(25, 20%, 22%));
+    --gradient-danger: linear-gradient(135deg, hsl(0, 72%, 55%), hsl(15, 80%, 55%));
+    --gradient-success: linear-gradient(135deg, hsl(152, 60%, 42%), hsl(165, 55%, 48%));
+
+    /* Shadows */
+    --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+    --shadow-card-hover: 0 4px 16px -2px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+    --shadow-elevated: 0 8px 30px -8px rgba(0, 0, 0, 0.12);
+    --shadow-glow: 0 0 24px hsl(28, 85%, 55%, 0.25);
+    --shadow-inner-soft: inset 0 2px 4px 0 rgba(0, 0, 0, 0.04);
+
+    /* Transitions */
+    --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.2);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.35);
+  }
+}
+
+@layer components {
+  .badge-dot {
+    @apply w-2 h-2 rounded-full bg-primary animate-pulse-soft;
+  }
+
+  .section-title {
+    @apply text-lg font-semibold text-foreground flex items-center gap-2;
+  }
+
+  .stat-value {
+    @apply text-2xl font-bold text-foreground tracking-tight;
+  }
+
+  .stat-label {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .tab-active {
+    @apply text-primary border-b-2 border-primary font-medium;
+  }
+
+  .tab-inactive {
+    @apply text-muted-foreground hover:text-foreground;
+  }
+
+  .card-interactive {
+    @apply transition-all duration-300 hover:shadow-card-hover hover:-translate-y-0.5;
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-primary);
+  }
+}
+
+/* Chat panel slide-up animation */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}

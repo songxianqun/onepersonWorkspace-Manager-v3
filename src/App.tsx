@@ -1,0 +1,127 @@
+import { useState, useRef, createContext, useContext, useCallback } from "react"
+import { WorkTips } from "@/components/WorkTips"
+import { AIAssistants } from "@/components/AIAssistants"
+import { PerformancePanel } from "@/components/PerformancePanel"
+import { AIChatInline } from "@/components/AIChatInline"
+import { AIChatInput } from "@/components/AIChatInput"
+import { V3Header, type V3Tab } from "@/components/V3Header"
+import { SupportPage } from "@/pages/SupportPage"
+import { CollabPage } from "@/pages/CollabPage"
+import { ArrowUp } from "lucide-react"
+
+interface ChatContextType {
+  isInChat: boolean
+  agentName: string
+  agentImage: string
+  initialMessage: string
+  openChat: (agent: { name: string; image: string }, message?: string) => void
+  exitChat: () => void
+}
+
+export const ChatContext = createContext<ChatContextType>({
+  isInChat: false,
+  agentName: "",
+  agentImage: "",
+  initialMessage: "",
+  openChat: () => {},
+  exitChat: () => {},
+})
+
+export function useChatContext() {
+  return useContext(ChatContext)
+}
+
+function App() {
+  const [activeTab, setActiveTab] = useState<V3Tab>("employee")
+  const [chatState, setChatState] = useState({
+    isInChat: false,
+    agentName: "",
+    agentImage: "",
+    initialMessage: "",
+  })
+  const topRef = useRef<HTMLDivElement>(null)
+  const chatRef = useRef<HTMLDivElement>(null)
+
+  const openChat = useCallback(
+    (agent: { name: string; image: string }, message?: string) => {
+      setChatState({
+        isInChat: true,
+        agentName: agent.name,
+        agentImage: agent.image,
+        initialMessage: message || "",
+      })
+      setTimeout(() => {
+        chatRef.current?.scrollIntoView({ behavior: "smooth" })
+      }, 100)
+    },
+    []
+  )
+
+  const exitChat = useCallback(() => {
+    setChatState((s) => ({ ...s, isInChat: false }))
+    setTimeout(() => {
+      topRef.current?.scrollIntoView({ behavior: "smooth" })
+    }, 50)
+  }, [])
+
+  const handleTabChange = (tab: V3Tab) => {
+    setActiveTab(tab)
+    // 切换 tab 时退出对话状态
+    if (tab !== "employee") {
+      setChatState((s) => ({ ...s, isInChat: false }))
+    }
+  }
+
+  return (
+    <ChatContext.Provider value={{ ...chatState, openChat, exitChat }}>
+      <div className="h-screen flex flex-col bg-background overflow-hidden">
+        {/* 统一顶部导航 */}
+        <V3Header activeTab={activeTab} onTabChange={handleTabChange} />
+
+        {/* 员工端 */}
+        {activeTab === "employee" && (
+          <div className="flex-1 overflow-hidden relative" ref={topRef}>
+            <div className={chatState.isInChat ? "hidden" : "h-full overflow-y-auto"}>
+              <WorkTips />
+              <PerformancePanel />
+              <AIAssistants />
+              <AIChatInput />
+            </div>
+
+            {chatState.isInChat && (
+              <div className="h-full overflow-y-auto" ref={chatRef}>
+                <AIChatInline />
+              </div>
+            )}
+
+            {chatState.isInChat && (
+              <button
+                onClick={exitChat}
+                className="fixed bottom-6 right-6 z-40 w-11 h-11 rounded-full bg-card border border-border shadow-elevated flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/30 transition-all duration-200"
+                title="返回工作台"
+              >
+                <ArrowUp className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* 业务支持端 */}
+        {activeTab === "support" && (
+          <div className="flex-1 overflow-hidden">
+            <SupportPage />
+          </div>
+        )}
+
+        {/* 协同端 */}
+        {activeTab === "collab" && (
+          <div className="flex-1 overflow-hidden">
+            <CollabPage />
+          </div>
+        )}
+      </div>
+    </ChatContext.Provider>
+  )
+}
+
+export default App
