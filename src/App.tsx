@@ -1,4 +1,4 @@
-import { useState, useRef, createContext, useContext, useCallback } from "react"
+import { useState, useRef, createContext, useContext, useCallback, useEffect } from "react"
 import { WorkTips } from "@/components/WorkTips"
 import { AIAssistants } from "@/components/AIAssistants"
 import { PerformancePanel } from "@/components/PerformancePanel"
@@ -32,7 +32,13 @@ export function useChatContext() {
 }
 
 function App() {
-  const [activeTab, setActiveTab] = useState<V3Tab>("employee")
+  const [activeTab, setActiveTab] = useState<V3Tab>(() => {
+    const params = new URLSearchParams(window.location.search)
+    const tabParam = params.get("tab") as V3Tab | null
+    return tabParam && ["employee", "support", "collab"].includes(tabParam)
+      ? tabParam
+      : "employee"
+  })
   const [chatState, setChatState] = useState({
     isInChat: false,
     agentName: "",
@@ -66,11 +72,26 @@ function App() {
 
   const handleTabChange = (tab: V3Tab) => {
     setActiveTab(tab)
+    const url = new URL(window.location.href)
+    url.searchParams.set("tab", tab)
+    window.history.replaceState({ tab }, "", url.toString())
     // 切换 tab 时退出对话状态
     if (tab !== "employee") {
       setChatState((s) => ({ ...s, isInChat: false }))
     }
   }
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search)
+      const tabParam = params.get("tab") as V3Tab | null
+      if (tabParam && ["employee", "support", "collab"].includes(tabParam)) {
+        setActiveTab(tabParam)
+      }
+    }
+    window.addEventListener("popstate", handlePopState)
+    return () => window.removeEventListener("popstate", handlePopState)
+  }, [])
 
   return (
     <ChatContext.Provider value={{ ...chatState, openChat, exitChat }}>
