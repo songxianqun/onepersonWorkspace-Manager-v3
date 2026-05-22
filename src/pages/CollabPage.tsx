@@ -25,7 +25,6 @@ import {
 import { agendas, type Agenda, type AgendaPriority, type AgendaStatus } from "@/data/supportData"
 import { PageChatBar } from "@/components/PageChatBar"
 import { cn } from "@/lib/utils"
-import { DesignNotes } from "@/components/DesignNotes"
 
 // ─── 顶部导航模块配置 ────────────────────────────────
 type CollabSection = "agenda" | "business" | "risk" | "team" | "emergency"
@@ -221,19 +220,6 @@ export function CollabPage() {
         {activeSection === "risk" && <RiskSection />}
         {activeSection === "team" && <TeamSection />}
         {activeSection === "emergency" && <EmergencySection />}
-
-        {/* 设计要点说明 */}
-        <DesignNotes
-          title="协同端 — 领导决策的跨部门协同平台"
-          notes={[
-            { label: "五大板块", text: "请示事项/经营看板/风险提示/队伍状况/应急组织，管理面全覆盖" },
-            { label: "以议题为单元", text: "聚合跨部门问题，非单条事项，高效处理重大事项" },
-            { label: "决策闭环", text: "决策→结构化指令→下发→执行追踪→逾期自动提醒" },
-            { label: "AI建议驱动", text: "每个板块AI自动提炼要点+给出可执行建议，30秒获取全貌" },
-            { label: "规则知会", text: "重大事项阈值自动推送领导，风险不遗漏" },
-            { label: "三端可并行", text: "员工可直接越级提请协同，不强制串联" },
-          ]}
-        />
       </div>
 
       {/* 底部对话输入栏 */}

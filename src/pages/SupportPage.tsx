@@ -19,7 +19,6 @@ import { ItemDetailPanel } from "@/components/support/ItemDetailPanel"
 import { PageChatBar } from "@/components/PageChatBar"
 import { cn } from "@/lib/utils"
 import { useChatContext } from "@/App"
-import { DesignNotes } from "@/components/DesignNotes"
 
 // ─── 各部门智能体入口（与员工端保持一致） ─────────────────
 const supportAgents = [
@@ -276,17 +275,6 @@ export function SupportPage() {
               </>
             )}
           </div>
-
-          {/* 设计要点说明 */}
-          <DesignNotes
-            title="业务支持端 — 各条线支持中心的统一汇聚视图"
-            notes={[
-              { label: "AI预判先行", text: "每条事项进入时AI已完成预处理，支持人员聚焦决策" },
-              { label: "规则知会", text: "系统自动触发关注事项，支持人员可主动前置介入" },
-              { label: "一键操作", text: "复核通过/打回补录/提请协同，AI建议+一键执行" },
-              { label: "不管人", text: "只管业务事项和动作，人员组织属HR范畴" },
-            ]}
-          />
         </main>
 
         {/* ── 右侧详情面板 ── */}
