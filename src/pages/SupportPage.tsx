@@ -3,7 +3,6 @@ import {
   AlertCircle,
   Clock,
   Eye,
-  CheckCircle2,
   Bell,
   Filter,
   LayoutGrid,
@@ -13,7 +12,6 @@ import {
   FileText,
   History,
   MessagesSquare,
-  PanelLeftOpen,
   PanelLeftClose,
 } from "lucide-react"
 import { workItems, trackItems, type WorkItem, type TrackItem, type Priority } from "@/data/supportData"
@@ -21,6 +19,7 @@ import { ItemDetailPanel } from "@/components/support/ItemDetailPanel"
 import { PageChatBar } from "@/components/PageChatBar"
 import { cn } from "@/lib/utils"
 import { useChatContext } from "@/App"
+import { DesignNotes } from "@/components/DesignNotes"
 
 // ─── 各部门智能体入口（与员工端保持一致） ─────────────────
 const supportAgents = [
@@ -31,14 +30,6 @@ const supportAgents = [
   { name: "销交业务助理", image: "/images/avatar-sales.png" },
   { name: "机构业务助理", image: "/images/avatar-institution.png" },
   { name: "交叉验证助理", image: "/images/avatar-crosscheck.png" },
-]
-
-// ─── 队列分组 ──────────────────────────────────────────
-const queueGroups = [
-  { key: "all", label: "全部事项", shortLabel: "全部", color: "text-foreground", dotColor: "bg-foreground/40" },
-  { key: "资管", label: "资管支持中心", shortLabel: "资管", color: "text-orange-500", dotColor: "bg-orange-500" },
-  { key: "投行", label: "投行支持中心", shortLabel: "投行", color: "text-blue-500", dotColor: "bg-blue-500" },
-  { key: "零售", label: "零售支持中心", shortLabel: "零售", color: "text-green-600", dotColor: "bg-green-600" },
 ]
 
 // ─── 侧边栏 mock 数据 ──────────────────────────────────
@@ -58,56 +49,6 @@ const sidebarHistorySessions = [
   { id: 3, text: "IPO准入材料完整度核查" },
   { id: 4, text: "资管模型指标精简方案讨论" },
 ]
-
-// ─── 风险预警 mock 数据 ──────────────────────────────────
-const riskAlerts = [
-  {
-    id: "r1",
-    level: "high" as const,
-    title: "贵州茅台定增方案资产负债率持续偏高",
-    detail: "连续2季度超75%，应付账款账期延长，资金压力信号明显，需在方案推进前完成客观数据核查",
-    itemId: "wi-002",
-    businessLine: "资管",
-  },
-  {
-    id: "r2",
-    level: "high" as const,
-    title: "股票质押项目涉双条线客户，策略冲突风险",
-    detail: "资管与投行条线在同一客户的对客口径尚未统一，继续推进存在内控合规风险，已提请协同处理",
-    itemId: "wi-007",
-    businessLine: "资管",
-  },
-  {
-    id: "r3",
-    level: "medium" as const,
-    title: "IPO准入申请现金流量表缺失",
-    detail: "材料完整度92%，关键财务数据不全，若进入复核流程后被退回将影响准入时效",
-    itemId: "wi-004",
-    businessLine: "投行",
-  },
-  {
-    id: "r4",
-    level: "medium" as const,
-    title: "3份合同模板不符合当前标准",
-    detail: "存量合同使用旧版模板，字段定义存在歧义，可能导致后续执行争议，建议尽快规范处理",
-    itemId: "wi-003",
-    businessLine: "资管",
-  },
-  {
-    id: "r5",
-    level: "watch" as const,
-    title: "高净值客户资产异常转移监控",
-    detail: "5位客户近30天资产变动超40%，存在潜在流失风险，当前仍在监控观察阶段",
-    itemId: "wi-006",
-    businessLine: "零售",
-  },
-]
-
-const riskLevelConfig = {
-  high: { label: "高风险", color: "text-destructive", bg: "bg-destructive/10", border: "border-destructive/25", dot: "bg-destructive" },
-  medium: { label: "中风险", color: "text-warning", bg: "bg-warning/10", border: "border-warning/25", dot: "bg-warning" },
-  watch: { label: "关注", color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/20", dot: "bg-blue-500" },
-}
 
 // ─── 其他配置 ──────────────────────────────────────────
 const priorityConfig: Record<Priority, { label: string; color: string; bg: string; icon: React.ElementType }> = {
@@ -145,7 +86,7 @@ const ruleActionConfig = {
 // ─── 主页面 ────────────────────────────────────────────
 export function SupportPage() {
   const { openChat } = useChatContext()
-  const [activeQueue, setActiveQueue] = useState("all")
+  const [activeQueue] = useState("all")
   const [selectedItem, setSelectedItem] = useState<WorkItem | null>(null)
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "watch">("all")
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
@@ -161,23 +102,6 @@ export function SupportPage() {
         : item.sourceType === "rule" || item.priority === "watch"
     return lineMatch && statusMatch
   })
-
-  // 风险预警：按当前队列筛选（Tab隐藏，数据保留备用）
-  // const visibleRisks = riskAlerts.filter(
-  //   (r) => activeQueue === "all" || r.businessLine === activeQueue
-  // )
-
-  const stats = {
-    urgent: workItems.filter((i) => i.priority === "urgent" && i.status !== "done").length,
-    normal: workItems.filter((i) => i.priority === "normal" && i.status !== "done").length,
-    watch: workItems.filter((i) => i.priority === "watch").length,
-    done: workItems.filter((i) => i.status === "done").length,
-  }
-
-  const getQueueCount = (key: string) => {
-    if (key === "all") return workItems.filter((i) => i.status !== "done").length
-    return workItems.filter((i) => i.businessLine === key && i.status !== "done").length
-  }
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -352,6 +276,17 @@ export function SupportPage() {
               </>
             )}
           </div>
+
+          {/* 设计要点说明 */}
+          <DesignNotes
+            title="业务支持端 — 各条线支持中心的统一汇聚视图"
+            notes={[
+              { label: "AI预判先行", text: "每条事项进入时AI已完成预处理，支持人员聚焦决策" },
+              { label: "规则知会", text: "系统自动触发关注事项，支持人员可主动前置介入" },
+              { label: "一键操作", text: "复核通过/打回补录/提请协同，AI建议+一键执行" },
+              { label: "不管人", text: "只管业务事项和动作，人员组织属HR范畴" },
+            ]}
+          />
         </main>
 
         {/* ── 右侧详情面板 ── */}
