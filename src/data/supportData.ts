@@ -100,60 +100,6 @@ export const workItems: WorkItem[] = [
     },
   },
   {
-    id: "wi-004",
-    title: "IPO项目准入申请 — XX科技股份",
-    businessLine: "投行",
-    stage: "准入",
-    submitter: "高瑾妮",
-    submittedAt: "2小时前",
-    sourceType: "submitted",
-    priority: "normal",
-    status: "pending",
-    aiPrejudge: "材料完整度92%，缺少近3年现金流量表，其余核心指标符合准入要求，可进入复核",
-    aiAction: "handle",
-    subject: {
-      object: "华创证券投行条线-高瑾妮 与 XX科技股份-CFO陈某",
-      action: "提交IPO项目准入申请复核",
-      result: "材料基本完整，AI预判可进入复核，支持中心确认后正式受理",
-    },
-  },
-  {
-    id: "wi-005",
-    title: "城农商行存款委托产品方案 — 遵义农商行",
-    businessLine: "投行",
-    stage: "方案生成",
-    submitter: "杨帆",
-    submittedAt: "3小时前",
-    sourceType: "submitted",
-    priority: "normal",
-    status: "processing",
-    aiPrejudge: "方案结构完整，总资产规模与净息差数据匹配合理，建议直接处理",
-    aiAction: "handle",
-    subject: {
-      object: "华创证券投行条线-杨帆 与 遵义农商行-行长赵某",
-      action: "提交存款委托产品方案审核",
-      result: "方案进入复核流程，支持中心处理中",
-    },
-  },
-  {
-    id: "wi-006",
-    title: "高净值客户资产配置异常预警",
-    businessLine: "零售",
-    stage: "客户服务",
-    submitter: "系统规则触发",
-    submittedAt: "30分钟前",
-    sourceType: "rule",
-    priority: "watch",
-    status: "pending",
-    aiPrejudge: "客户近30天资产变动超过40%，银行存款大幅减少，监控到异常转移迹象，建议关注",
-    aiAction: "handle",
-    subject: {
-      object: "零售高净值客户群",
-      action: "系统自动监控资产变动",
-      result: "发现5位客户资产异常变动，可能面临流失风险",
-    },
-  },
-  {
     id: "wi-007",
     title: "股票质押业务客户分析 — 某上市公司实控人",
     businessLine: "资管",
@@ -257,5 +203,105 @@ export const agendas: Agenda[] = [
       { dept: "零售条线", content: "参照投行/资管方法论重构零售模型，明确三端角色与业务闭环", deadline: "2026-05-25", trackStatus: "pending" },
       { dept: "研发中心", content: "配合各条线完成200+指标减法，更新自动驾驶大模型数据标准", deadline: "2026-05-27", trackStatus: "pending" },
     ],
+  },
+]
+
+// ─── 跟进看板数据类型 ──────────────────────────────────────
+export type TrackItemType = "project" | "product" | "task"
+export type TrackItemStatus = "normal" | "at_risk" | "blocked" | "done"
+export type TrackItemRelation = "owner" | "participant" | "watcher"
+
+export interface TrackItem {
+  id: string
+  type: TrackItemType
+  title: string
+  description: string
+  relation: TrackItemRelation       // 我与此事项的关系
+  handler: string                   // 当前处理人
+  handlerDept: string
+  progressLabel: string             // 进展阶段描述
+  progressPercent: number           // 0-100
+  updatedAt: string
+  status: TrackItemStatus
+  hasRisk: boolean
+  riskDesc?: string
+  needsEscalation: boolean          // 是否有请示必要
+  escalationSubmitted: boolean      // 是否已提交请示
+  escalatedAgendaId?: string
+  aiJudge: string                   // AI 对当前状态的综合判断
+}
+
+export const trackItems: TrackItem[] = [
+  {
+    id: "tr-001",
+    type: "project",
+    title: "资管模型指标体系重构项目",
+    description: "按资产负债/现金流/资产配置三维重构27个模型，精简冗余指标，630节点前完成验收",
+    relation: "owner",
+    handler: "温从余",
+    handlerDept: "研发中心",
+    progressLabel: "指标拆解中",
+    progressPercent: 35,
+    updatedAt: "今日 10:20",
+    status: "at_risk",
+    hasRisk: true,
+    riskDesc: "630节点倒计时42天，当前进度滞后约8%，算力资源尚未到位",
+    needsEscalation: true,
+    escalationSubmitted: true,
+    escalatedAgendaId: "ag-002",
+    aiJudge: "进度存在滞后风险，算力申请已提请协同，建议持续跟进资源到位情况",
+  },
+  {
+    id: "tr-002",
+    type: "product",
+    title: "零售智能体客户分析模型上线",
+    description: "零售条线智能体需接入资管/投行存量客户数据，完善客户画像分析维度",
+    relation: "participant",
+    handler: "朱东飞",
+    handlerDept: "零售条线",
+    progressLabel: "数据权限审批中",
+    progressPercent: 50,
+    updatedAt: "今日 09:05",
+    status: "blocked",
+    hasRisk: true,
+    riskDesc: "跨条线数据权限申请未获批，模型分析维度不完整，可能影响上线质量",
+    needsEscalation: true,
+    escalationSubmitted: false,
+    aiJudge: "数据权限是当前唯一阻塞点，建议尽快推动合规部门审批，或先以脱敏数据进行阶段性验证",
+  },
+  {
+    id: "tr-003",
+    type: "task",
+    title: "投行条线术语体系统一与歧义词清理",
+    description: "统一四个核心模型的术语边界，清理现有文档中的歧义词汇，形成术语标准手册",
+    relation: "watcher",
+    handler: "高瑾妮",
+    handlerDept: "投行支持中心",
+    progressLabel: "初稿撰写中",
+    progressPercent: 60,
+    updatedAt: "昨日 17:30",
+    status: "normal",
+    hasRisk: false,
+    needsEscalation: false,
+    escalationSubmitted: false,
+    aiJudge: "进展正常，预计按期完成，无需额外干预",
+  },
+  {
+    id: "tr-004",
+    type: "project",
+    title: "华创-XX科技IPO项目准入推进",
+    description: "协助投行条线完成IPO项目准入复核，补齐现金流量表后进入正式受理",
+    relation: "participant",
+    handler: "高瑾妮",
+    handlerDept: "投行支持中心",
+    progressLabel: "材料补录中",
+    progressPercent: 20,
+    updatedAt: "2小时前",
+    status: "at_risk",
+    hasRisk: true,
+    riskDesc: "现金流量表缺失，若本周内未补齐将错过本期准入窗口期",
+    needsEscalation: false,
+    escalationSubmitted: false,
+    aiJudge: "材料缺口明确，建议直接催促客户方CFO提供，窗口期紧张，需本周内完成",
   },
 ]

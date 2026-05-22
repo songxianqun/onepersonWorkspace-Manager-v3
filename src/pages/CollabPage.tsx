@@ -20,6 +20,9 @@ import {
   TrendingDown,
   Activity,
   Shield,
+  Plus,
+  Filter,
+  ArrowUpRight,
 } from "lucide-react"
 import { agendas, type Agenda, type AgendaPriority, type AgendaStatus } from "@/data/supportData"
 import { PageChatBar } from "@/components/PageChatBar"
@@ -134,6 +137,14 @@ export function CollabPage() {
 
   const agendaPendingCount = agendas.filter(a => !["closed"].includes(a.status)).length
 
+  const chatPlaceholder: Record<CollabSection, string> = {
+    agenda: "向 AI 提问，例如：摘要当前请示事项，或帮我起草批复意见…",
+    business: "向 AI 提问，例如：分析本月营收趋势，或哪个分中心目标完成率最低…",
+    risk: "向 AI 提问，例如：列出当前高风险项，或帮我起草整改通知…",
+    team: "向 AI 提问，例如：查看本月人员变动，或绩效待改进人员有哪些…",
+    emergency: "向 AI 提问，例如：哪些预案尚未演练，或帮我更新应急联系人名单…",
+  }
+
   return (
     <div className="h-full flex flex-col">
       {/* 整体可滚动区域：导航卡片 + 内容 */}
@@ -223,7 +234,7 @@ export function CollabPage() {
       <PageChatBar
         context="collab"
         agentName="决策分析助手"
-        placeholder="向 AI 提问，例如：摘要当前请示事项，或帮我起草协同议题…"
+        placeholder={chatPlaceholder[activeSection]}
       />
     </div>
   )
@@ -461,62 +472,217 @@ function TeamSection() {
 }
 
 // ─── 应急组织 ─────────────────────────────────────────
+type EmergencyPriority = "high" | "medium"
+type EmergencyType = "突发事件处置" | "内部协调处置" | "合规监管响应" | "舆情危机处置"
+
+interface EmergencyEvent {
+  id: string
+  priority: EmergencyPriority
+  type: EmergencyType
+  title: string
+  desc: string
+  source: string
+  time: string
+  timeline: { time: string; content: string; done: boolean }[]
+}
+
+const emergencyEvents: EmergencyEvent[] = [
+  {
+    id: "em-001",
+    priority: "high",
+    type: "突发事件处置",
+    title: "客户董事长临时到访，讨论再融资",
+    desc: "资管员工张三接到气派科技董秘电话，董事长将在2小时后到公司拜访，希望讨论新一轮再融资（定增）事宜。该客户原由投行部负责，但董秘临时联系了资管员工张三。",
+    source: "公司大圆桌",
+    time: "2026-05-21 09:30",
+    timeline: [
+      { time: "09:30", content: "资管员工张三收到客户董秘来电，记录需求", done: true },
+      { time: "09:45", content: "上报协同端，发起跨部门协调申请", done: true },
+      { time: "10:00", content: "投行部确认接待方案，资管部配合协助", done: false },
+      { time: "11:30", content: "董事长到访，联合接待", done: false },
+    ],
+  },
+  {
+    id: "em-002",
+    priority: "high",
+    type: "内部协调处置",
+    title: "证监会派出机构临时来公司进行政策宣导",
+    desc: "今日上午，公司接到辖区证监局通知，为贯彻最新《国九条》及配套政策，证监局将于今日下午派员来公司进行专题宣导，要求公司全体高管、投行业务全体骨干参加。预计宣导时长2小时，之后设有互动答疑环节。",
+    source: "公司大圆桌",
+    time: "2026-05-21 10:15",
+    timeline: [
+      { time: "10:15", content: "收到证监局通知，记录宣导安排", done: true },
+      { time: "10:30", content: "通知全体高管及投行骨干，确认出席名单", done: true },
+      { time: "13:30", content: "证监局人员到场，专题宣导开始", done: false },
+      { time: "15:30", content: "互动答疑，整理会议纪要", done: false },
+    ],
+  },
+  {
+    id: "em-003",
+    priority: "medium",
+    type: "合规监管响应",
+    title: "反洗钱可疑交易报告逾期预警",
+    desc: "合规部系统检测到一笔涉及¥5,200,000的可疑交易，按规定需在48小时内完成SAR报告提交。当前已过36小时，仍未完成审核流程，存在逾期合规风险。",
+    source: "合规系统",
+    time: "2026-05-20 21:00",
+    timeline: [
+      { time: "昨日 21:00", content: "系统自动识别可疑交易，发起预警", done: true },
+      { time: "今日 08:00", content: "合规专员开始审核，收集相关凭证", done: true },
+      { time: "今日 14:00", content: "提交合规总监审批", done: false },
+      { time: "今日 17:00", content: "SAR报告提交至监管系统（截止时间）", done: false },
+    ],
+  },
+]
+
 function EmergencySection() {
-  const plans = [
-    { name: "信息系统故障（一级）", dept: "科技部", status: "已演练", ok: true },
-    { name: "重大客户投诉（二级）", dept: "客户部", status: "已演练", ok: true },
-    { name: "舆情危机（一级）", dept: "市场部", status: "待演练", ok: false },
-    { name: "自然灾害（三级）", dept: "行政部", status: "已演练", ok: true },
-  ]
-  const aiAdvice = [
-    "舆情危机预案尚未演练，建议本月内安排（当前舆情环境敏感）",
-    "上次网络中断响应时间45分钟，超过15分钟目标，建议科技部优化应急响应流程",
-    "建议更新应急联系人名单，确认所有负责人手机畅通",
-    "Q3建议新增「数据泄露应急预案」，当前缺少此项",
-  ]
+  const [filter, setFilter] = useState<"all" | "high">("all")
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+
+  const toggleExpand = (id: string) => {
+    setExpandedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const displayed = filter === "high"
+    ? emergencyEvents.filter(e => e.priority === "high")
+    : emergencyEvents
+
+  const highCount = emergencyEvents.filter(e => e.priority === "high").length
+
+  const priorityLabel: Record<EmergencyPriority, { label: string; color: string; bg: string; border: string }> = {
+    high: { label: "高优先", color: "text-destructive", bg: "bg-destructive/10", border: "border-l-destructive" },
+    medium: { label: "中优先", color: "text-warning", bg: "bg-warning/10", border: "border-l-warning" },
+  }
+
+  const typeColor: Record<EmergencyType, string> = {
+    "突发事件处置": "text-orange-600 bg-orange-500/10",
+    "内部协调处置": "text-blue-600 bg-blue-500/10",
+    "合规监管响应": "text-destructive bg-destructive/10",
+    "舆情危机处置": "text-purple-600 bg-purple-500/10",
+  }
+
   return (
-    <div className="p-6">
-      <div className="max-w-[1200px] space-y-5">
-        <SectionTitle icon={Siren} title="应急组织" sub="预案状态与演练情况" />
-        <div className="grid grid-cols-4 gap-4">
-          {[
-            { label: "应急预案总数", value: "15项", color: "text-foreground" },
-            { label: "本月完成演练", value: "2次", color: "text-success" },
-            { label: "待处理事件", value: "1项", color: "text-warning" },
-            { label: "平均响应时效", value: "15分钟", color: "text-foreground" },
-          ].map((s) => (
-            <div key={s.label} className="bg-card border border-border rounded-xl p-4">
-              <div className="text-xs text-muted-foreground mb-2">{s.label}</div>
-              <div className={cn("text-2xl font-bold", s.color)}>{s.value}</div>
-            </div>
-          ))}
+    <div className="p-5 space-y-4">
+      {/* 顶部标题栏 */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <Siren className="w-4 h-4 text-destructive" />
+          <span className="text-base font-bold text-foreground">待处理应急事件</span>
+          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-muted text-foreground">
+            {emergencyEvents.length} 件
+          </span>
+          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">
+            高优先 {highCount}
+          </span>
         </div>
-        <div className="bg-card border border-border rounded-xl p-5">
-          <div className="text-sm font-semibold mb-4">预案演练情况</div>
-          <div className="space-y-3">
-            {plans.map((p) => (
-              <div key={p.name} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                <div className="flex items-center gap-3">
-                  <Activity className={cn("w-4 h-4", p.ok ? "text-success" : "text-warning")} />
-                  <span className="text-sm text-foreground">{p.name}</span>
-                  <span className="text-xs px-2 py-0.5 bg-muted rounded text-muted-foreground">{p.dept}</span>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center border border-border rounded-lg overflow-hidden text-xs">
+            <button
+              onClick={() => setFilter("all")}
+              className={cn(
+                "px-3 py-1.5 flex items-center gap-1 transition-colors",
+                filter === "all" ? "bg-muted text-foreground font-medium" : "text-muted-foreground hover:bg-muted/50"
+              )}
+            >
+              <Filter className="w-3 h-3" />
+              全部类型
+            </button>
+            <button
+              onClick={() => setFilter("high")}
+              className={cn(
+                "px-3 py-1.5 transition-colors border-l border-border",
+                filter === "high" ? "bg-destructive/10 text-destructive font-medium" : "text-muted-foreground hover:bg-muted/50"
+              )}
+            >
+              仅看紧急
+            </button>
+          </div>
+          <button className="flex items-center gap-1.5 px-3 py-1.5 bg-destructive text-destructive-foreground rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity">
+            <Plus className="w-3.5 h-3.5" />
+            发起应急事项
+          </button>
+        </div>
+      </div>
+
+      {/* 事件卡片列表 */}
+      <div className="space-y-3">
+        {displayed.map((ev) => {
+          const pCfg = priorityLabel[ev.priority]
+          const isExpanded = expandedIds.has(ev.id)
+          return (
+            <div
+              key={ev.id}
+              className={cn(
+                "bg-card border border-l-4 rounded-xl overflow-hidden",
+                pCfg.border,
+                "border-border"
+              )}
+            >
+              <div className="px-5 pt-4 pb-3">
+                {/* 顶行：优先级 + 类型 + 来源 + 跳转 */}
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-sm", pCfg.bg, pCfg.color)}>
+                      {pCfg.label}
+                    </span>
+                    <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded-sm", typeColor[ev.type])}>
+                      {ev.type}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-muted-foreground">来源 {ev.source}</span>
+                    <button className="w-6 h-6 rounded-lg bg-muted flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-colors">
+                      <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground" />
+                    </button>
+                  </div>
                 </div>
-                <span className={cn("text-xs px-2.5 py-1 rounded-full font-medium", p.ok ? "bg-success/10 text-success" : "bg-warning/10 text-warning")}>
-                  {p.status}
-                </span>
+
+                {/* 标题 */}
+                <div className="text-sm font-semibold text-foreground mb-1.5 leading-snug">
+                  {ev.title}
+                </div>
+
+                {/* 描述 */}
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {ev.desc}
+                </p>
+
+                {/* 时间轴展开按钮 */}
+                <button
+                  onClick={() => toggleExpand(ev.id)}
+                  className="mt-3 flex items-center gap-1 text-[11px] text-muted-foreground hover:text-primary transition-colors"
+                >
+                  <Clock className="w-3 h-3" />
+                  <span>事件响应时间轴</span>
+                  {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                </button>
+
+                {/* 时间轴内容 */}
+                {isExpanded && (
+                  <div className="mt-3 pl-2 border-l-2 border-border space-y-2.5">
+                    {ev.timeline.map((t, i) => (
+                      <div key={i} className="flex items-start gap-3">
+                        <div className={cn(
+                          "w-2 h-2 rounded-full mt-1 shrink-0 -ml-[5px]",
+                          t.done ? "bg-primary" : "bg-border"
+                        )} />
+                        <div className="flex items-start gap-2 flex-1">
+                          <span className="text-[10px] text-muted-foreground shrink-0 mt-0.5 w-16">{t.time}</span>
+                          <span className={cn("text-xs leading-relaxed", t.done ? "text-foreground" : "text-muted-foreground")}>
+                            {t.content}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        </div>
-        <div className="bg-warning/5 border border-warning/20 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle className="w-4 h-4 text-warning" />
-            <span className="text-sm font-semibold text-warning">最近事件记录</span>
-          </div>
-          <p className="text-sm text-foreground">分支机构网络中断 — 2026-05-15 | 已处理 | 响应耗时：45分钟</p>
-          <p className="text-xs text-muted-foreground mt-1">科技部处置，超出15分钟目标，需复盘优化</p>
-        </div>
-        <AIAdviceCard advice={aiAdvice} />
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -571,9 +737,6 @@ function AIAdviceCard({ advice }: { advice: string[] }) {
 function AgendaCard({ agenda, isSelected, onClick }: { agenda: Agenda; isSelected: boolean; onClick: () => void }) {
   const typeCfg = agendaTypeConfig[agenda.agendaType]
   const pCfg = priorityConfig[agenda.priority]
-  const sCfg = statusConfig[agenda.status]
-  const StatusIcon = sCfg.icon
-  const trig = triggerLabel[agenda.triggerType]
 
   // AI 建议文本（根据优先级和类型生成）
   const aiSuggests: Record<string, string> = {
@@ -598,7 +761,7 @@ function AgendaCard({ agenda, isSelected, onClick }: { agenda: Agenda; isSelecte
     >
       {/* 卡片主体 */}
       <div className="px-4 pt-3 pb-2">
-        {/* 顶行：优先级 + 类型 + 状态 + 时间 */}
+        {/* 顶行：优先级 + 类型 + 时间 */}
         <div className="flex items-center gap-1.5 mb-2">
           <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-sm", pCfg.bg, pCfg.color)}>
             {pCfg.label}
@@ -606,11 +769,6 @@ function AgendaCard({ agenda, isSelected, onClick }: { agenda: Agenda; isSelecte
           <span className={cn("text-[10px] px-1.5 py-0.5 rounded-sm font-medium", typeCfg.bg, typeCfg.color)}>
             {typeCfg.label}
           </span>
-          <div className={cn("flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-sm bg-muted", sCfg.color)}>
-            <StatusIcon className="w-2.5 h-2.5" />
-            {sCfg.label}
-          </div>
-          <span className={cn("text-[10px] font-medium ml-0.5", trig.color)}>{trig.label}</span>
           <span className="text-[10px] text-muted-foreground ml-auto">{agenda.initiatedAt}</span>
         </div>
 
@@ -651,18 +809,6 @@ function AgendaCard({ agenda, isSelected, onClick }: { agenda: Agenda; isSelecte
                 className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity"
               >
                 批准执行
-              </button>
-              <button
-                onClick={(e) => e.stopPropagation()}
-                className="px-3 py-1.5 bg-background text-destructive border border-destructive/40 rounded-lg text-xs font-semibold hover:bg-destructive/5 transition-colors"
-              >
-                驳回
-              </button>
-              <button
-                onClick={(e) => e.stopPropagation()}
-                className="px-3 py-1.5 bg-background text-foreground border border-border rounded-lg text-xs font-medium hover:bg-muted transition-colors"
-              >
-                转交
               </button>
               <button
                 onClick={(e) => e.stopPropagation()}

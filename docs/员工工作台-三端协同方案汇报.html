@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>员工工作台三端协同-设计方案</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --blue: #2563eb;
+  --blue-light: #eff6ff;
+  --blue-mid: #bfdbfe;
+  --orange: #ea580c;
+  --orange-light: #fff7ed;
+  --orange-mid: #fed7aa;
+  --green: #16a34a;
+  --green-light: #f0fdf4;
+  --purple: #7c3aed;
+  --purple-light: #f5f3ff;
+  --gray: #6b7280;
+  --gray-light: #f9fafb;
+  --border: #e5e7eb;
+  --text: #111827;
+  --text-muted: #6b7280;
+  --white: #ffffff;
+  --accent: #1d4ed8;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  background: #f3f4f6;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ── 顶部封面区 ── */
+.cover {
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  padding: 40px 64px 32px;
+}
+.cover-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.cover h1 {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+.cover-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+.cover-tags {
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+.cover-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--gray-light);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+/* ── Tab 导航 ── */
+.nav {
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  padding: 0 64px;
+  display: flex;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.nav button {
+  padding: 14px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.nav button.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 700;
+}
+.nav button:hover:not(.active) {
+  color: var(--text);
+}
+
+/* ── 主体容器 ── */
+.main {
+  padding: 40px 64px 80px;
+  max-width: 1120px;
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ── 通用排版 ── */
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.section-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+.section-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.75;
+  max-width: 760px;
+}
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 32px 0;
+}
+
+/* ── 块标题（带色条） ── */
+.block-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 18px;
+  color: var(--text);
+}
+.block-title .bar {
+  width: 3px;
+  height: 16px;
+  border-radius: 2px;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+/* ── 白色卡片 ── */
+.card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px 28px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+/* ── 架构图 ── */
+.arch-diagram {
+  display: grid;
+  grid-template-columns: 1fr 56px 1fr 56px 1fr;
+  align-items: stretch;
+  gap: 0;
+}
+.arch-panel {
+  border-radius: 12px;
+  padding: 22px 20px;
+  min-height: 240px;
+  position: relative;
+}
+.arch-panel.emp {
+  background: var(--blue-light);
+  border: 1.5px solid var(--blue-mid);
+}
+.arch-panel.sup {
+  background: var(--orange-light);
+  border: 1.5px solid var(--orange-mid);
+}
+.arch-panel.col {
+  background: #fef2f2;
+  border: 1.5px dashed #fca5a5;
+}
+.arch-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+.arch-panel.emp .arch-badge { background: var(--blue-mid); color: #1e40af; }
+.arch-panel.sup .arch-badge { background: var(--orange-mid); color: #9a3412; }
+.arch-panel.col .arch-badge { background: #fca5a5; color: #991b1b; }
+.arch-panel h3 {
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.arch-role {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.arch-panel ul {
+  list-style: none;
+}
+.arch-panel ul li {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  background: rgba(255,255,255,0.75);
+  line-height: 1.5;
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+}
+.arch-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 4px;
+}
+.arch-arrow-icon {
+  font-size: 18px;
+  color: #9ca3af;
+}
+.arch-arrow-label {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.4;
+  writing-mode: vertical-rl;
+  letter-spacing: 0.03em;
+}
+.arch-ai-tag {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  right: 14px;
+  background: var(--purple-light);
+  border: 1px dashed #c4b5fd;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 10px;
+  color: var(--purple);
+  text-align: center;
+}
+
+/* ── 三端卡片 ── */
+.panel-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 4px;
+}
+.panel-card {
+  border-radius: 12px;
+  padding: 20px 20px;
+  border: 1px solid var(--border);
+  background: var(--white);
+}
+.panel-card .pc-tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+.panel-card.emp .pc-tag { background: var(--blue-mid); color: #1e40af; }
+.panel-card.sup .pc-tag { background: var(--orange-mid); color: #9a3412; }
+.panel-card.col .pc-tag { background: #fca5a5; color: #991b1b; }
+.panel-card h4 {
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.panel-card .pc-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+.panel-card .pc-role {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.panel-card .pc-features {
+  list-style: none;
+  margin-top: 12px;
+}
+.panel-card .pc-features li {
+  font-size: 11px;
+  color: var(--text);
+  padding: 3px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+}
+.panel-card .pc-features li::before {
+  content: "·";
+  color: var(--accent);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ── 闭环卡片 ── */
+.loop-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.loop-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 20px;
+}
+.loop-no {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+.loop-title {
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+.loop-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.65;
+  margin-bottom: 12px;
+}
+.loop-flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+.loop-step {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 12px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.loop-step.blue { background: var(--blue-light); border-color: var(--blue-mid); color: var(--blue); }
+.loop-step.orange { background: var(--orange-light); border-color: var(--orange-mid); color: var(--orange); }
+.loop-step.red { background: #fef2f2; border-color: #fca5a5; color: #dc2626; }
+.loop-step.green { background: var(--green-light); border-color: #86efac; color: var(--green); }
+.loop-step.purple { background: var(--purple-light); border-color: #c4b5fd; color: var(--purple); }
+.loop-arrow-char {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+/* ── iframe 预览 ── */
+.preview-wrap {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  margin: 20px 0;
+}
+.preview-bar {
+  background: #f1f5f9;
+  border-bottom: 1px solid var(--border);
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.preview-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.preview-url {
+  flex: 1;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 3px 10px;
+  font-size: 11px;
+  color: var(--text-muted);
+  max-width: 320px;
+}
+.preview-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+.preview-frame {
+  width: 100%;
+  border: none;
+  display: block;
+  background: #fff;
+}
+
+/* ── 端介绍 Hero ── */
+.endpoint-hero {
+  border-radius: 12px;
+  padding: 26px 28px;
+  margin-bottom: 24px;
+}
+.endpoint-hero.emp { background: var(--blue-light); border: 1.5px solid var(--blue-mid); }
+.endpoint-hero.sup { background: var(--orange-light); border: 1.5px solid var(--orange-mid); }
+.endpoint-hero.col { background: #fef2f2; border: 1.5px solid #fca5a5; }
+.ep-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+.endpoint-hero.emp .ep-label { color: var(--blue); }
+.endpoint-hero.sup .ep-label { color: var(--orange); }
+.endpoint-hero.col .ep-label { color: #dc2626; }
+.ep-title { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+.ep-desc { font-size: 13px; color: var(--text-muted); }
+
+/* ── 功能信息格 ── */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 18px 0;
+}
+.info-cell {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.info-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.info-value {
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.65;
+}
+
+/* ── Badge ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.badge-blue { background: var(--blue-light); color: var(--blue); }
+.badge-orange { background: var(--orange-light); color: var(--orange); }
+.badge-green { background: var(--green-light); color: var(--green); }
+.badge-red { background: #fef2f2; color: #dc2626; }
+.badge-purple { background: var(--purple-light); color: var(--purple); }
+.badge-gray { background: var(--gray-light); color: var(--gray); }
+
+/* ── 数据模型 ── */
+.model-grid {
+  display: grid;
+  grid-template-columns: 1fr 40px 1fr 40px 1fr;
+  align-items: center;
+  gap: 0;
+  margin: 16px 0;
+}
+.model-box {
+  border-radius: 12px;
+  padding: 16px 18px;
+  text-align: center;
+}
+.model-box.em { background: var(--blue-light); border: 1.5px solid var(--blue-mid); }
+.model-box.su { background: var(--orange-light); border: 1.5px solid var(--orange-mid); }
+.model-box.co { background: #fef2f2; border: 1.5px solid #fca5a5; }
+.model-box h4 { font-size: 12px; font-weight: 700; margin-bottom: 8px; }
+.model-field {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin: 2px;
+  display: inline-block;
+  background: rgba(255,255,255,0.8);
+  border: 1px solid rgba(0,0,0,0.06);
+}
+.model-arrow { text-align: center; color: #d1d5db; font-size: 20px; }
+
+/* table */
+table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+th { background: var(--gray-light); padding: 8px 12px; text-align: left; font-weight: 700; font-size: 11px; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.55; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #fafafa; }
+
+/* 模拟 UI */
+.mock-emp {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 16px;
+  border: 1px solid var(--border);
+}
+.mock-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  font-size: 11px;
+  background: #fff;
+  border: 1px solid var(--border);
+}
+.mock-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.mock-ai-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.mock-ai-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.s-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-left: 3px solid #dc2626;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+.s-card.warn { border-left-color: #f59e0b; }
+.s-ai {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: var(--purple-light);
+  border: 1px solid #ddd6fe;
+  border-radius: 6px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--purple);
+}
+.sbtn {
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  border: none;
+  cursor: default;
+}
+.sbtn-p { background: var(--accent); color: #fff; }
+.sbtn-o { background: var(--gray-light); color: var(--gray); border: 1px solid var(--border); }
+.col-tabs { display: flex; border-bottom: 1px solid var(--border); background: #fff; }
+.col-tab { padding: 7px 12px; font-size: 11px; font-weight: 500; color: var(--text-muted); border-bottom: 2px solid transparent; cursor: default; }
+.col-tab.on { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
+.col-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-left: 3px solid #dc2626;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+.col-card.med { border-left-color: #f59e0b; }
+.col-chat {
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  background: #fafafa;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.col-input {
+  flex: 1;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.col-send {
+  padding: 6px 14px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border: none;
+  cursor: default;
+}
+
+@media (max-width: 768px) {
+  .cover, .nav, .main { padding-left: 20px; padding-right: 20px; }
+  .arch-diagram, .model-grid { grid-template-columns: 1fr; }
+  .arch-arrow { display: none; }
+  .panel-cards, .loop-grid, .info-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ 封面 ══ -->
+<div class="cover">
+  <h1>员工工作台三端协同 - 设计方案</h1>
+  <div class="cover-sub">基于518智能体项目会议纪要 · 公司级员工工作台三端建设</div>
+</div>
+
+<!-- ══ Tab 导航 ══ -->
+<nav class="nav">
+  <button class="active" onclick="switchTab('arch', this)">整体架构</button>
+  <button onclick="switchTab('emp', this)">① 员工端</button>
+  <button onclick="switchTab('sup', this)">② 业务支持端</button>
+  <button onclick="switchTab('col', this)">③ 协同端</button>
+  <button onclick="switchTab('model', this)">事项数据模型</button>
+</nav>
+
+<div class="main">
+
+<!-- ════════════════════ 整体架构 ════════════════════ -->
+<div id="tab-arch" class="tab-content active">
+
+  <!-- 1. 概要说明 -->
+  <div class="section-title">三端不是三个系统，而是同一平台的三类角色视图</div>
+  <div class="section-desc">
+    员工工作台基于518智能体项目会议纪要，在公司级层面建设三端协同体系。通过统一的事项数据模型贯通三端，同一应用内通过顶部 Tab 切换视图。员工端聚焦个人工作提示与AI智能体调用；业务支持端负责事项的路由分发与质控处理；协同端汇聚跨部门议题，由决策层进行批准与批注。三端形成完整闭环，覆盖"提交—处理—决策"全链路。
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 2. 架构图 -->
+  <div class="card">
+    <div class="block-title"><span class="bar"></span>三端协同架构全景图</div>
+    <div class="arch-diagram">
+
+      <div class="arch-panel emp">
+        <div class="arch-badge">端一 · 已建</div>
+        <h3>员工端</h3>
+        <div class="arch-role">使用对象：各条线员工</div>
+        <ul>
+          <li>⚡ 工作提示 — 紧急/风险/进展/待办/日程</li>
+          <li>📊 业绩与绩效 — 个人经营数据</li>
+          <li>🤖 AI 团队 — 客户分析/业务分析/方案生成/客户服务</li>
+          <li>💬 全局 AI 对话输入框</li>
+          <li>📤 点击工作提示唤起对应智能体</li>
+        </ul>
+        <div class="arch-ai-tag">🤖 AI 智能体驱动 — 四大智能体协作</div>
+      </div>
+
+      <div class="arch-arrow">
+        <div class="arch-arrow-icon">→</div>
+        <div class="arch-arrow-label">提交事项规则知会</div>
+        <div class="arch-arrow-icon">←</div>
+        <div class="arch-arrow-label">结果反馈</div>
+      </div>
+
+      <div class="arch-panel sup">
+        <div class="arch-badge">端二 · 新建</div>
+        <h3>业务支持端</h3>
+        <div class="arch-role">使用对象：各条线支持中心人员</div>
+        <ul>
+          <li>📋 事项列表 — 资管/投行/零售队列</li>
+          <li>🧠 AI 预判 + 分类路由</li>
+          <li>✅ 质控 / 复核 / 预利处理</li>
+          <li>📊 事项追踪看板</li>
+          <li>🔔 规则知会确认下发</li>
+        </ul>
+        <div class="arch-ai-tag">🤖 AI 辅助判断 — 自动路由 + 优先级</div>
+      </div>
+
+      <div class="arch-arrow">
+        <div class="arch-arrow-icon">→</div>
+        <div class="arch-arrow-label">提请协同跨部门申请</div>
+        <div class="arch-arrow-icon">←</div>
+        <div class="arch-arrow-label">决策指令下发</div>
+      </div>
+
+      <div class="arch-panel col">
+        <div class="arch-badge">端三 · 新建</div>
+        <h3>协同端</h3>
+        <div class="arch-role">使用对象：分管领导 / 决策层</div>
+        <ul>
+          <li>🗓 请示事项 — 批准执行 / 批注意见</li>
+          <li>📁 业务协同 — 跨部门事项处置</li>
+          <li>⚠️ 风险议题 — 合规风险集中决策</li>
+          <li>👥 团队协同 — 任务分配与跟踪</li>
+          <li>🚨 应急组织 — 突发事件应急响应</li>
+        </ul>
+        <div class="arch-ai-tag">🤖 AI 会议纪要 + 决策摘要生成</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 3. 三端卡片介绍 -->
+  <div class="block-title"><span class="bar"></span>三端定位说明</div>
+  <div class="panel-cards">
+    <div class="panel-card emp">
+      <div class="pc-tag">端一 · 员工端</div>
+      <h4>员工端</h4>
+      <div class="pc-role">使用角色：各条线员工</div>
+      <div class="pc-desc">以工作提示为核心，聚合员工日常所需的预警、业绩、AI智能体等功能，让员工在一个页面内完成工作感知与AI辅助作业。</div>
+      <ul class="pc-features">
+        <li>工作提示驱动注意力管理</li>
+        <li>四大AI智能体一键唤起</li>
+        <li>个人业绩数据实时呈现</li>
+        <li>提交事项至支持端处理</li>
+      </ul>
+    </div>
+    <div class="panel-card sup">
+      <div class="pc-tag">端二 · 新建</div>
+      <h4>业务支持端</h4>
+      <div class="pc-role">使用角色：各条线支持中心人员</div>
+      <div class="pc-desc">不管人，只管业务动作。负责接收员工端提交的事项，经AI路由与质控后处置，需跨部门决策则提请协同端。</div>
+      <ul class="pc-features">
+        <li>按条线分类管理事项队列</li>
+        <li>AI自动预判优先级与分类</li>
+        <li>质控/复核/规则知会闭环</li>
+        <li>将高优先级事项推送协同端</li>
+      </ul>
+    </div>
+    <div class="panel-card col">
+      <div class="pc-tag">端三 · 新建</div>
+      <h4>协同端</h4>
+      <div class="pc-role">使用角色：分管领导 / 决策层</div>
+      <div class="pc-desc">汇聚需要跨部门协同和领导决策的事项与议题，支持批准执行和批注意见，形成有记录、可追溯的决策闭环。</div>
+      <ul class="pc-features">
+        <li>请示事项集中批阅</li>
+        <li>业务协同与风险议题决策</li>
+        <li>应急组织快速响应</li>
+        <li>AI会议纪要与决策摘要</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 4. 三个闭环 -->
+  <div class="block-title"><span class="bar"></span>三大业务闭环</div>
+  <div class="loop-grid">
+    <div class="loop-card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div class="loop-no">1</div>
+        <div class="loop-title">事项提交与处置闭环</div>
+      </div>
+      <div class="loop-desc">员工通过工作提示感知事项，提交至业务支持端，经AI路由质控后处置完成，结果反馈至员工端。</div>
+      <div class="loop-flow">
+        <span class="loop-step blue">员工感知</span>
+        <span class="loop-arrow-char">→</span>
+        <span class="loop-step orange">提交事项</span>
+        <span class="loop-arrow-char">→</span>
+        <span class="loop-step orange">AI路由质控</span>
+        <span class="loop-arrow-char">→</span>
+        <span class="loop-step green">处置完成</span>
+        <span class="loop-arrow-char">→</span>
+        <span class="loop-step blue">结果反馈</span>
+      </div>
+    </div>
+    <div class="loop-card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div class="loop-no">2</div>
+        <div class="loop-title">跨部门协同与决策闭环</div>
+      </div>
+      <div class="loop-desc">支持端发现跨部门事项，提请协同端，由决策层批准执行或批注意见，指令下发后支持端执行落地。</div>
+      <div class="loop-flow">
+        <span class="loop-step orange">支持端识别</span>
+        <span class="loop-arrow-char">→</span>
+        <span class="loop-step red">提请协同</span>
+        <span class="loop-arrow-char">→</span>
+        <span class="loop-step red">领导批阅</span>
+        <span class="loop-arrow-char">→</span>
+        <span class="loop-step orange">下发执行</span>
+        <span class="loop-arrow-char">→</span>
+        <span class="loop-step green">闭环归档</span>
+      </div>
+    </div>
+    <div class="loop-card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div class="loop-no">3</div>
+        <div class="loop-title">应急响应与处置闭环</div>
+      </div>
+      <div class="loop-desc">协同端应急组织模块集中呈现突发事件，领导可快速查看时间线与影响，批准启动应急预案，全程留痕。</div>
+      <div class="loop-flow">
+        <span class="loop-step red">应急事件触发</span>
+        <span class="loop-arrow-char">→</span>
+        <span class="loop-step red">协同端汇聚</span>
+        <span class="loop-arrow-char">→</span>
+        <span class="loop-step purple">AI摘要</span>
+        <span class="loop-arrow-char">→</span>
+        <span class="loop-step red">批准预案</span>
+        <span class="loop-arrow-char">→</span>
+        <span class="loop-step green">执行归档</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /tab-arch -->
+
+
+<!-- ════════════════════ 员工端 ════════════════════ -->
+<div id="tab-emp" class="tab-content">
+
+  <div class="endpoint-hero emp">
+    <div class="ep-label">端一 · 已建 · EMPLOYEE PANEL</div>
+    <div class="ep-title">员工端</div>
+    <div class="ep-desc">以工作提示为核心，聚合员工日常所需的预警、业绩、AI智能体，让员工在一个页面内完成工作感知与AI辅助作业。使用对象：各条线员工</div>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-cell">
+      <div class="info-label">核心定位</div>
+      <div class="info-value">员工日常工作的统一入口；提供工作提示驱动的注意力管理，AI智能体一键调用。</div>
+    </div>
+    <div class="info-cell">
+      <div class="info-label">主要功能模块</div>
+      <div class="info-value">工作提示 · 业绩绩效 · AI智能体团队 · 全局 AI 对话</div>
+    </div>
+    <div class="info-cell">
+      <div class="info-label">四大 AI 智能体</div>
+      <div class="info-value">客户分析 · 业务分析 · 方案生成 · 客户服务</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div class="block-title"><span class="bar"></span>工作提示 — 五类信息聚合</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <span class="badge badge-red">⚡ 紧急提示</span>
+      <span class="badge badge-orange">⚠️ 风险预警</span>
+      <span class="badge badge-blue">📊 业务进展</span>
+      <span class="badge badge-gray">📋 待办事项</span>
+      <span class="badge badge-gray">📅 日程提醒</span>
+    </div>
+    <div class="mock-emp">
+      <div class="mock-tip">
+        <div class="mock-dot" style="background:#dc2626"></div>
+        <div><strong style="color:#dc2626;font-size:11px">[紧急]</strong> <span style="font-size:11px">客户张总账户融资比例超预警线，需立即处理</span></div>
+      </div>
+      <div class="mock-tip">
+        <div class="mock-dot" style="background:#f59e0b"></div>
+        <div><strong style="color:#f59e0b;font-size:11px">[风险]</strong> <span style="font-size:11px">项目XY合规材料待补充，截止时间 16:00</span></div>
+      </div>
+      <div class="mock-tip">
+        <div class="mock-dot" style="background:#3b82f6"></div>
+        <div><strong style="color:#3b82f6;font-size:11px">[进展]</strong> <span style="font-size:11px">理财产品Y额度已到账，可通知客户购买</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div class="block-title"><span class="bar"></span>AI 智能体团队 — 四大助理</div>
+    <div class="mock-ai-card">
+      <div class="mock-ai-avatar" style="background:#eff6ff">🔍</div>
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:700;margin-bottom:2px">客户分析助理</div>
+        <div style="font-size:11px;color:var(--text-muted)">客户画像·持仓分析·风险评估·行为洞察</div>
+      </div>
+      <span class="badge badge-blue">在线</span>
+    </div>
+    <div class="mock-ai-card">
+      <div class="mock-ai-avatar" style="background:var(--orange-light)">📈</div>
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:700;margin-bottom:2px">业务分析助理</div>
+        <div style="font-size:11px;color:var(--text-muted)">业绩归因·市场对比·机会发现·方向建议</div>
+      </div>
+      <span class="badge badge-orange">在线</span>
+    </div>
+    <div class="mock-ai-card">
+      <div class="mock-ai-avatar" style="background:var(--green-light)">📝</div>
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:700;margin-bottom:2px">方案生成助理</div>
+        <div style="font-size:11px;color:var(--text-muted)">投资方案·资产配置·汇报材料·话术生成</div>
+      </div>
+      <span class="badge badge-green">在线</span>
+    </div>
+    <div class="mock-ai-card">
+      <div class="mock-ai-avatar" style="background:var(--purple-light)">🎧</div>
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:700;margin-bottom:2px">客户服务助理</div>
+        <div style="font-size:11px;color:var(--text-muted)">问题解答·投诉处理·服务记录·跟进提醒</div>
+      </div>
+      <span class="badge badge-purple">在线</span>
+    </div>
+  </div>
+
+  <!-- iframe 预览 -->
+  <div class="block-title"><span class="bar"></span>页面原型预览</div>
+  <div class="preview-wrap">
+    <div class="preview-bar">
+      <div class="preview-dot" style="background:#ef4444"></div>
+      <div class="preview-dot" style="background:#f59e0b"></div>
+      <div class="preview-dot" style="background:#22c55e"></div>
+      <div class="preview-url">localhost:5176 — 员工端</div>
+      <div class="preview-label">V3 实时原型</div>
+    </div>
+    <iframe class="preview-frame" src="http://localhost:5176" height="600" title="员工端原型"></iframe>
+  </div>
+
+</div><!-- /tab-emp -->
+
+
+<!-- ════════════════════ 业务支持端 ════════════════════ -->
+<div id="tab-sup" class="tab-content">
+
+  <div class="endpoint-hero sup">
+    <div class="ep-label">端二 · 新建 · SUPPORT PANEL</div>
+    <div class="ep-title">业务支持端</div>
+    <div class="ep-desc">不管人，只管业务动作。负责接收员工端提交的事项，经AI路由与质控后处置，需跨部门决策则提请协同端。使用对象：各条线支持中心人员</div>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-cell">
+      <div class="info-label">核心定位</div>
+      <div class="info-value">事项的路由中心与处置中心；AI预判分类，质控复核，规则知会，处置结果回传。</div>
+    </div>
+    <div class="info-cell">
+      <div class="info-label">主要功能模块</div>
+      <div class="info-value">事项列表 · AI路由预判 · 质控复核 · 追踪看板 · 规则知会下发</div>
+    </div>
+    <div class="info-cell">
+      <div class="info-label">覆盖条线</div>
+      <div class="info-value">资产管理条线 · 投资银行条线 · 零售财富条线 · 合规风控条线</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div class="block-title"><span class="bar"></span>事项队列 — AI 路由预判</div>
+    <div class="s-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div>
+          <span class="badge badge-red" style="margin-right:6px">紧急</span>
+          <span class="badge badge-orange">投行条线</span>
+        </div>
+        <span style="font-size:10px;color:var(--text-muted)">09:23</span>
+      </div>
+      <div style="font-size:12px;font-weight:600;margin-bottom:4px">XY项目合规材料缺失 — 需紧急补充</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">来源：员工端 · 张三 · 投行部</div>
+      <div class="s-ai">🤖 AI 预判：合规类事项，建议路由至合规支持中心，优先级：P1</div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="sbtn sbtn-p">确认路由</button>
+        <button class="sbtn sbtn-o">调整分类</button>
+      </div>
+    </div>
+    <div class="s-card warn">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div>
+          <span class="badge badge-orange" style="margin-right:6px">重要</span>
+          <span class="badge badge-gray">零售条线</span>
+        </div>
+        <span style="font-size:10px;color:var(--text-muted)">10:05</span>
+      </div>
+      <div style="font-size:12px;font-weight:600;margin-bottom:4px">客户赵总账户融资额度申请</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">来源：员工端 · 李四 · 财富管理部</div>
+      <div class="s-ai">🤖 AI 预判：授信类事项，建议路由至零售信贷中心，优先级：P2</div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="sbtn sbtn-p">确认路由</button>
+        <button class="sbtn sbtn-o">提请协同</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- iframe 预览 -->
+  <div class="block-title"><span class="bar"></span>页面原型预览</div>
+  <div class="preview-wrap">
+    <div class="preview-bar">
+      <div class="preview-dot" style="background:#ef4444"></div>
+      <div class="preview-dot" style="background:#f59e0b"></div>
+      <div class="preview-dot" style="background:#22c55e"></div>
+      <div class="preview-url">localhost:5176 — 业务支持端</div>
+      <div class="preview-label">V3 实时原型</div>
+    </div>
+    <iframe class="preview-frame" src="http://localhost:5176" height="600" title="业务支持端原型"></iframe>
+  </div>
+
+</div><!-- /tab-sup -->
+
+
+<!-- ════════════════════ 协同端 ════════════════════ -->
+<div id="tab-col" class="tab-content">
+
+  <div class="endpoint-hero col">
+    <div class="ep-label">端三 · 新建 · COLLABORATION PANEL</div>
+    <div class="ep-title">协同端</div>
+    <div class="ep-desc">汇聚需要跨部门协同和领导决策的事项与议题，支持批准执行和批注意见，形成有记录、可追溯的决策闭环。使用对象：分管领导 / 决策层</div>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-cell">
+      <div class="info-label">核心定位</div>
+      <div class="info-value">决策层的协同工作台；集中批阅跨部门事项，形成可追溯的决策记录。</div>
+    </div>
+    <div class="info-cell">
+      <div class="info-label">五大功能模块</div>
+      <div class="info-value">请示事项 · 业务协同 · 风险议题 · 团队协同 · 应急组织</div>
+    </div>
+    <div class="info-cell">
+      <div class="info-label">决策动作</div>
+      <div class="info-value">批准执行 · 批注意见 · 展开时间线 · AI 会议纪要生成</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div class="block-title"><span class="bar"></span>请示事项 — 批阅界面</div>
+    <div class="col-tabs">
+      <div class="col-tab on">请示事项</div>
+      <div class="col-tab">业务协同</div>
+      <div class="col-tab">风险议题</div>
+      <div class="col-tab">团队协同</div>
+      <div class="col-tab">应急组织</div>
+    </div>
+    <div style="padding:12px 0">
+      <div class="col-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+          <div>
+            <span class="badge badge-red" style="margin-right:6px">紧急</span>
+            <span class="badge badge-orange">投行决策</span>
+          </div>
+          <span style="font-size:10px;color:var(--text-muted)">09:45</span>
+        </div>
+        <div style="font-size:12px;font-weight:700;margin-bottom:4px">XY项目超募资金使用方案请示</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">来源：投行支持中心 · 王总提请 · 涉及资金2000万</div>
+        <div style="display:flex;gap:8px">
+          <button class="sbtn sbtn-p">批准执行</button>
+          <button class="sbtn sbtn-o">批注意见</button>
+        </div>
+      </div>
+      <div class="col-card med">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+          <div>
+            <span class="badge badge-orange" style="margin-right:6px">重要</span>
+            <span class="badge badge-gray">合规决策</span>
+          </div>
+          <span style="font-size:10px;color:var(--text-muted)">10:20</span>
+        </div>
+        <div style="font-size:12px;font-weight:700;margin-bottom:4px">反洗钱SAR报告提交授权请示</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">来源：合规支持中心 · 逾期3天需紧急处理</div>
+        <div style="display:flex;gap:8px">
+          <button class="sbtn sbtn-p">批准执行</button>
+          <button class="sbtn sbtn-o">批注意见</button>
+        </div>
+      </div>
+    </div>
+    <div class="col-chat">
+      <div class="col-input">请示对协同端各功能模块的相关批注意见...</div>
+      <button class="col-send">发送</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div class="block-title"><span class="bar"></span>应急组织 — 突发事件响应</div>
+    <div style="padding:8px 0">
+      <div style="background:#fff;border:1px solid var(--border);border-left:4px solid #dc2626;border-radius:8px;padding:12px 14px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <div style="display:flex;gap:6px;align-items:center">
+            <span class="badge badge-red">P1</span>
+            <span class="badge badge-gray">客户接待</span>
+            <span style="font-size:10px;color:var(--text-muted)">来源：客服中心</span>
+          </div>
+          <span style="font-size:18px;color:#9ca3af;cursor:pointer">↗</span>
+        </div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px">客户董事长到访 — 特别接待预案</div>
+        <div style="font-size:11px;color:var(--text-muted)">重要客户公司董事长明日10:00莅临，需启动VIP接待流程，协调会议室、午宴及汇报材料准备。</div>
+      </div>
+      <div style="background:#fff;border:1px solid var(--border);border-left:4px solid #f59e0b;border-radius:8px;padding:12px 14px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <div style="display:flex;gap:6px;align-items:center">
+            <span class="badge badge-orange">P2</span>
+            <span class="badge badge-gray">监管</span>
+            <span style="font-size:10px;color:var(--text-muted)">来源：合规部</span>
+          </div>
+          <span style="font-size:18px;color:#9ca3af;cursor:pointer">↗</span>
+        </div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px">证监会专题宣导 — 合规准备</div>
+        <div style="font-size:11px;color:var(--text-muted)">证监会将于本周五开展专题宣导检查，需准备相关制度文件及人员安排。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- iframe 预览 -->
+  <div class="block-title"><span class="bar"></span>页面原型预览</div>
+  <div class="preview-wrap">
+    <div class="preview-bar">
+      <div class="preview-dot" style="background:#ef4444"></div>
+      <div class="preview-dot" style="background:#f59e0b"></div>
+      <div class="preview-dot" style="background:#22c55e"></div>
+      <div class="preview-url">localhost:5176 — 协同端</div>
+      <div class="preview-label">V3 实时原型</div>
+    </div>
+    <iframe class="preview-frame" src="http://localhost:5176" height="600" title="协同端原型"></iframe>
+  </div>
+
+</div><!-- /tab-col -->
+
+
+<!-- ════════════════════ 数据模型 ════════════════════ -->
+<div id="tab-model" class="tab-content">
+
+  <div class="section-label">核心数据结构</div>
+  <div class="section-title">事项 &amp; 议题统一数据模型</div>
+  <div class="section-desc">三端共享同一套事项数据模型，不同角色视图本质是对同一数据的不同呈现与操作权限。</div>
+
+  <div class="divider"></div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div class="block-title"><span class="bar"></span>三端数据流转图</div>
+    <div class="model-grid">
+      <div class="model-box em">
+        <h4>员工端 · 事项来源</h4>
+        <div><span class="model-field">提示类型</span><span class="model-field">紧急程度</span><span class="model-field">关联客户</span></div>
+        <div><span class="model-field">触发规则</span><span class="model-field">提交人</span><span class="model-field">提交时间</span></div>
+        <div><span class="model-field">描述内容</span><span class="model-field">附件</span></div>
+      </div>
+      <div class="model-arrow">→</div>
+      <div class="model-box su">
+        <h4>支持端 · 事项处置</h4>
+        <div><span class="model-field">AI路由分类</span><span class="model-field">优先级</span></div>
+        <div><span class="model-field">处置状态</span><span class="model-field">处置人</span><span class="model-field">处置时间</span></div>
+        <div><span class="model-field">质控结果</span><span class="model-field">规则知会</span><span class="model-field">备注</span></div>
+      </div>
+      <div class="model-arrow">→</div>
+      <div class="model-box co">
+        <h4>协同端 · 决策记录</h4>
+        <div><span class="model-field">议题类型</span><span class="model-field">提请人</span></div>
+        <div><span class="model-field">决策动作</span><span class="model-field">决策人</span><span class="model-field">决策时间</span></div>
+        <div><span class="model-field">批注意见</span><span class="model-field">执行结果</span><span class="model-field">归档状态</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div class="block-title"><span class="bar"></span>事项核心字段说明</div>
+    <table>
+      <thead>
+        <tr>
+          <th>字段</th>
+          <th>类型</th>
+          <th>说明</th>
+          <th>涉及端</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>id</code></td>
+          <td>string</td>
+          <td>事项唯一标识</td>
+          <td>三端共享</td>
+        </tr>
+        <tr>
+          <td><code>type</code></td>
+          <td>enum</td>
+          <td>事项类型：urgent / risk / progress / todo / schedule</td>
+          <td>员工端触发</td>
+        </tr>
+        <tr>
+          <td><code>priority</code></td>
+          <td>enum</td>
+          <td>优先级：P1紧急 / P2重要 / P3普通</td>
+          <td>支持端AI判定</td>
+        </tr>
+        <tr>
+          <td><code>status</code></td>
+          <td>enum</td>
+          <td>处置状态：pending / routing / processing / reviewing / decided / closed</td>
+          <td>三端流转</td>
+        </tr>
+        <tr>
+          <td><code>routeTo</code></td>
+          <td>string</td>
+          <td>AI路由至的支持中心名称</td>
+          <td>支持端</td>
+        </tr>
+        <tr>
+          <td><code>decision</code></td>
+          <td>object</td>
+          <td>决策记录：{ action, actor, time, comment }</td>
+          <td>协同端</td>
+        </tr>
+        <tr>
+          <td><code>timeline</code></td>
+          <td>array</td>
+          <td>操作时间线：[{ time, actor, action, note }]</td>
+          <td>三端可查</td>
+        </tr>
+        <tr>
+          <td><code>aiSummary</code></td>
+          <td>string</td>
+          <td>AI 生成的事项摘要，用于协同端快速阅读</td>
+          <td>协同端</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="block-title"><span class="bar"></span>议题数据模型（协同端专属）</div>
+    <table>
+      <thead>
+        <tr>
+          <th>字段</th>
+          <th>类型</th>
+          <th>说明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>agendaId</code></td>
+          <td>string</td>
+          <td>议题唯一标识</td>
+        </tr>
+        <tr>
+          <td><code>section</code></td>
+          <td>enum</td>
+          <td>所属板块：agenda / business / risk / team / emergency</td>
+        </tr>
+        <tr>
+          <td><code>source</code></td>
+          <td>string</td>
+          <td>来源端与提请人</td>
+        </tr>
+        <tr>
+          <td><code>tags</code></td>
+          <td>array</td>
+          <td>标签：[优先级标签, 类型标签]，最多2个</td>
+        </tr>
+        <tr>
+          <td><code>decisionActions</code></td>
+          <td>enum[]</td>
+          <td>可用决策动作：approve（批准执行）/ comment（批注意见）</td>
+        </tr>
+        <tr>
+          <td><code>emergencyLevel</code></td>
+          <td>enum</td>
+          <td>应急等级：P1 / P2 / P3（仅应急组织模块）</td>
+        </tr>
+        <tr>
+          <td><code>timeline</code></td>
+          <td>array</td>
+          <td>事件时间线，可展开查看（可折叠）</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /tab-model -->
+
+</div><!-- /main -->
+
+<script>
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>

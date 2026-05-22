@@ -4,14 +4,19 @@ import {
   Clock,
   Eye,
   CheckCircle2,
-  ChevronRight,
   Bell,
   Filter,
   LayoutGrid,
   Bot,
-  ChevronLeft,
+  AlertTriangle,
+  MessageSquarePlus,
+  FileText,
+  History,
+  MessagesSquare,
+  PanelLeftOpen,
+  PanelLeftClose,
 } from "lucide-react"
-import { workItems, type WorkItem, type Priority } from "@/data/supportData"
+import { workItems, trackItems, type WorkItem, type TrackItem, type Priority } from "@/data/supportData"
 import { ItemDetailPanel } from "@/components/support/ItemDetailPanel"
 import { PageChatBar } from "@/components/PageChatBar"
 import { cn } from "@/lib/utils"
@@ -34,6 +39,24 @@ const queueGroups = [
   { key: "资管", label: "资管支持中心", shortLabel: "资管", color: "text-orange-500", dotColor: "bg-orange-500" },
   { key: "投行", label: "投行支持中心", shortLabel: "投行", color: "text-blue-500", dotColor: "bg-blue-500" },
   { key: "零售", label: "零售支持中心", shortLabel: "零售", color: "text-green-600", dotColor: "bg-green-600" },
+]
+
+// ─── 侧边栏 mock 数据 ──────────────────────────────────
+const sidebarWorkTips = [
+  { id: 1, text: "贵州茅台定增方案待复核", urgent: true },
+  { id: 2, text: "合同录入异常检测（3份）", urgent: false },
+  { id: 3, text: "IPO材料补录催办", urgent: false },
+]
+const sidebarHistoryItems = [
+  { id: 1, text: "城商行债券方案 — 中信银行", time: "今日" },
+  { id: 2, text: "股票质押客户分析提请协同", time: "昨日" },
+  { id: 3, text: "零售高净值客户预警处置", time: "5月19日" },
+]
+const sidebarHistorySessions = [
+  { id: 1, text: "分析贵州茅台定增合规风险" },
+  { id: 2, text: "起草跨条线协同申请" },
+  { id: 3, text: "IPO准入材料完整度核查" },
+  { id: 4, text: "资管模型指标精简方案讨论" },
 ]
 
 // ─── 风险预警 mock 数据 ──────────────────────────────────
@@ -126,7 +149,7 @@ export function SupportPage() {
   const [selectedItem, setSelectedItem] = useState<WorkItem | null>(null)
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "watch">("all")
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
-  const [mainTab, setMainTab] = useState<"risk" | "items">("items")
+  const [mainTab, setMainTab] = useState<"items" | "board">("items")
 
   const filteredItems = workItems.filter((item) => {
     const lineMatch = activeQueue === "all" || item.businessLine === activeQueue
@@ -139,10 +162,10 @@ export function SupportPage() {
     return lineMatch && statusMatch
   })
 
-  // 风险预警：按当前队列筛选
-  const visibleRisks = riskAlerts.filter(
-    (r) => activeQueue === "all" || r.businessLine === activeQueue
-  )
+  // 风险预警：按当前队列筛选（Tab隐藏，数据保留备用）
+  // const visibleRisks = riskAlerts.filter(
+  //   (r) => activeQueue === "all" || r.businessLine === activeQueue
+  // )
 
   const stats = {
     urgent: workItems.filter((i) => i.priority === "urgent" && i.status !== "done").length,
@@ -160,138 +183,94 @@ export function SupportPage() {
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex flex-1 overflow-hidden">
 
-        {/* ── 左侧可折叠侧边栏 ── */}
+        {/* ── 左侧 Gemini 风格侧边栏 ── */}
         <aside
           className={cn(
-            "shrink-0 border-r border-border bg-card flex flex-col transition-all duration-200 overflow-hidden",
-            sidebarCollapsed ? "w-14" : "w-52"
+            "shrink-0 border-r border-border bg-card flex flex-col transition-all duration-250 overflow-hidden",
+            sidebarCollapsed ? "w-0" : "w-60"
           )}
         >
-          {/* 折叠/展开按钮 */}
-          <div className={cn("flex items-center border-b border-border px-2 py-3", sidebarCollapsed ? "justify-center" : "justify-between px-3")}>
-            {!sidebarCollapsed && (
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">工作队列</span>
-            )}
+          {/* 顶部：收起按钮 */}
+          <div className="flex items-center justify-between px-3 py-3 shrink-0">
+            <span className="text-sm font-semibold text-foreground">业务支持助手</span>
             <button
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              onClick={() => setSidebarCollapsed(true)}
               className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
-              title={sidebarCollapsed ? "展开侧边栏" : "收起侧边栏"}
             >
-              {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+              <PanelLeftClose className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto py-2">
-            {/* 队列分组 */}
-            <div className={cn("space-y-0.5", sidebarCollapsed ? "px-1.5" : "px-2")}>
-              {queueGroups.map((g) => {
-                const count = getQueueCount(g.key)
-                const isActive = activeQueue === g.key
-                return (
+          {/* 新建会话 */}
+          <div className="px-3 mb-2 shrink-0">
+            <button
+              onClick={() => openChat({ name: "业务支持助手", image: "/images/avatar-invest-banking.png" })}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-muted/60 hover:bg-muted text-sm text-foreground font-medium transition-all group"
+            >
+              <MessageSquarePlus className="w-4 h-4 text-primary shrink-0" />
+              新建会话
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-3 space-y-4 pb-4">
+            {/* 工作提示 */}
+            <div>
+              <div className="flex items-center gap-1.5 px-1 mb-1.5">
+                <FileText className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">工作提示</span>
+              </div>
+              <div className="space-y-0.5">
+                {sidebarWorkTips.map((tip) => (
                   <button
-                    key={g.key}
-                    onClick={() => setActiveQueue(g.key)}
-                    title={sidebarCollapsed ? `${g.label}（${count}）` : undefined}
-                    className={cn(
-                      "w-full rounded-lg transition-all duration-150 relative",
-                      sidebarCollapsed
-                        ? "flex items-center justify-center h-10"
-                        : "flex items-center justify-between px-3 py-2.5 text-sm",
-                      isActive
-                        ? "bg-primary/10 text-primary font-medium"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                    )}
+                    key={tip.id}
+                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left hover:bg-muted transition-colors group"
                   >
-                    {sidebarCollapsed ? (
-                      /* 折叠态：彩色圆点 + 角标 */
-                      <div className="relative">
-                        <div className={cn("w-2.5 h-2.5 rounded-full", isActive ? "bg-primary" : g.dotColor)} />
-                        {count > 0 && (
-                          <span className="absolute -top-1.5 -right-2 text-[9px] font-bold text-destructive leading-none">
-                            {count}
-                          </span>
-                        )}
-                      </div>
-                    ) : (
-                      /* 展开态：文字 + 数字 */
-                      <>
-                        <span className={cn("truncate text-sm", isActive ? "" : g.color)}>{g.label}</span>
-                        {count > 0 && (
-                          <span className={cn(
-                            "text-xs px-1.5 py-0.5 rounded-full font-medium shrink-0",
-                            isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                          )}>
-                            {count}
-                          </span>
-                        )}
-                      </>
-                    )}
+                    {tip.urgent && <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0" />}
+                    <span className={cn(
+                      "text-xs truncate",
+                      tip.urgent ? "text-foreground font-medium" : "text-muted-foreground group-hover:text-foreground"
+                    )}>
+                      {tip.text}
+                    </span>
                   </button>
-                )
-              })}
+                ))}
+              </div>
             </div>
 
-            {/* 分隔线 */}
-            <div className="h-px bg-border mx-2 my-3" />
-
-            {/* 规则知会 */}
-            <div className={cn(sidebarCollapsed ? "px-1.5" : "px-2")}>
-              {!sidebarCollapsed && (
-                <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 px-1">规则知会</div>
-              )}
-              <button
-                onClick={() => { setActiveQueue("all"); setFilterStatus("watch") }}
-                title={sidebarCollapsed ? `自动监控（${stats.watch}）` : undefined}
-                className={cn(
-                  "w-full rounded-lg transition-all duration-150",
-                  sidebarCollapsed ? "flex items-center justify-center h-10" : "flex items-center justify-between px-3 py-2.5",
-                  filterStatus === "watch"
-                    ? "bg-blue-500/10 text-blue-600 font-medium"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                {sidebarCollapsed ? (
-                  <div className="relative">
-                    <Bell className="w-4 h-4" />
-                    {stats.watch > 0 && (
-                      <span className="absolute -top-1.5 -right-2 text-[9px] font-bold text-blue-500 leading-none">{stats.watch}</span>
-                    )}
-                  </div>
-                ) : (
-                  <>
-                    <span className="text-sm">自动监控</span>
-                    <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 font-medium">{stats.watch}</span>
-                  </>
-                )}
-              </button>
+            {/* 历史事项 */}
+            <div>
+              <div className="flex items-center gap-1.5 px-1 mb-1.5">
+                <History className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">历史事项</span>
+              </div>
+              <div className="space-y-0.5">
+                {sidebarHistoryItems.map((item) => (
+                  <button
+                    key={item.id}
+                    className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-left hover:bg-muted transition-colors group"
+                  >
+                    <span className="text-xs text-muted-foreground group-hover:text-foreground truncate flex-1">{item.text}</span>
+                    <span className="text-[10px] text-muted-foreground/60 shrink-0 ml-2">{item.time}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* 分隔线 */}
-            <div className="h-px bg-border mx-2 my-3" />
-
-            {/* 今日完成 */}
-            <div className={cn(sidebarCollapsed ? "px-1.5" : "px-2")}>
-              {!sidebarCollapsed && (
-                <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 px-1">今日完成</div>
-              )}
-              <div
-                title={sidebarCollapsed ? `今日已完成 ${stats.done + 12} 项` : undefined}
-                className={cn(
-                  "rounded-lg bg-success/8",
-                  sidebarCollapsed ? "flex items-center justify-center h-10" : "px-3 py-2.5"
-                )}
-              >
-                {sidebarCollapsed ? (
-                  <div className="relative">
-                    <CheckCircle2 className="w-4 h-4 text-success" />
-                    <span className="absolute -top-1.5 -right-2 text-[9px] font-bold text-success leading-none">{stats.done + 12}</span>
-                  </div>
-                ) : (
-                  <>
-                    <span className="text-sm font-semibold text-success">{stats.done + 12}</span>
-                    <span className="text-xs text-muted-foreground ml-1">项已处理</span>
-                  </>
-                )}
+            {/* 历史会话 */}
+            <div>
+              <div className="flex items-center gap-1.5 px-1 mb-1.5">
+                <MessagesSquare className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">历史会话</span>
+              </div>
+              <div className="space-y-0.5">
+                {sidebarHistorySessions.map((s) => (
+                  <button
+                    key={s.id}
+                    className="w-full px-2 py-1.5 rounded-lg text-left hover:bg-muted transition-colors group"
+                  >
+                    <span className="text-xs text-muted-foreground group-hover:text-foreground truncate block">{s.text}</span>
+                  </button>
+                ))}
               </div>
             </div>
           </div>
@@ -320,23 +299,22 @@ export function SupportPage() {
             </div>
           </div>
 
-          {/* Tab 切换：带统计数字 */}
+          {/* Tab 切换 */}
           <div className="px-5 pt-3 sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
             <div className="flex items-center gap-0">
               <TabBtn
-                active={mainTab === "risk"}
-                label="风险提示"
-                count={visibleRisks.length}
-                countColor={visibleRisks.filter(r => r.level === "high").length > 0 ? "text-destructive" : "text-warning"}
-                onClick={() => setMainTab("risk")}
-              />
-              <TabBtn
                 active={mainTab === "items"}
-                label="事项列表"
+                label="工作提示"
                 count={filteredItems.length}
                 onClick={() => setMainTab("items")}
               />
-              {/* 事项筛选（仅在事项 tab 显示，右对齐） */}
+              <TabBtn
+                active={mainTab === "board"}
+                label="事项看板"
+                count={trackItems.length}
+                onClick={() => setMainTab("board")}
+              />
+              {/* 工作提示筛选（右对齐） */}
               {mainTab === "items" && (
                 <div className="ml-auto flex items-center gap-1.5 pb-1">
                   <FilterBtn active={filterStatus === "all"} icon={LayoutGrid} label="全部" onClick={() => setFilterStatus("all")} />
@@ -348,45 +326,7 @@ export function SupportPage() {
           </div>
 
           <div className="p-5 space-y-3">
-            {/* ── 风险提示 tab ── */}
-            {mainTab === "risk" && visibleRisks.map((r) => {
-              const cfg = riskLevelConfig[r.level]
-              return (
-                <div
-                  key={r.id}
-                  className={cn("flex items-start gap-3 p-4 rounded-xl border", cfg.bg, cfg.border)}
-                >
-                  <div className={cn("mt-1.5 w-2 h-2 rounded-full shrink-0", cfg.dot)} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className={cn("text-xs font-semibold", cfg.color)}>{cfg.label}</span>
-                      <span className={cn(
-                        "text-[10px] px-1.5 py-0.5 rounded font-medium",
-                        r.businessLine === "资管" ? "bg-orange-500/10 text-orange-600"
-                        : r.businessLine === "投行" ? "bg-blue-500/10 text-blue-600"
-                        : "bg-green-600/10 text-green-700"
-                      )}>
-                        {r.businessLine}
-                      </span>
-                      <span className="text-sm font-medium text-foreground">{r.title}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{r.detail}</p>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
-                    {r.level === "high" && (
-                      <button className="text-xs px-2.5 py-1.5 rounded-lg bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-colors font-medium">
-                        立即处置
-                      </button>
-                    )}
-                    <button className="text-xs px-2.5 py-1.5 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-colors">
-                      关联事项
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-
-            {/* ── 事项列表 tab ── */}
+            {/* ── 工作提示 tab ── */}
             {mainTab === "items" && (
               <>
                 {filteredItems.length === 0 && (
@@ -399,6 +339,15 @@ export function SupportPage() {
                     isSelected={selectedItem?.id === item.id}
                     onClick={() => setSelectedItem(item.id === selectedItem?.id ? null : item)}
                   />
+                ))}
+              </>
+            )}
+
+            {/* ── 事项看板 tab ── */}
+            {mainTab === "board" && (
+              <>
+                {trackItems.map((item) => (
+                  <TrackItemCard key={item.id} item={item} />
                 ))}
               </>
             )}
@@ -495,16 +444,10 @@ function WorkItemCard({ item, isSelected, onClick }: {
           <span className="text-[10px] text-muted-foreground ml-auto">{item.submittedAt}</span>
         </div>
 
-        {/* 三层文字（无背景框） */}
-        <div className="space-y-0.5 mb-3">
-          <div className="text-xs text-muted-foreground leading-relaxed">
-            对象：{item.subject.object}
-          </div>
-          <div className="text-xs font-semibold text-foreground leading-relaxed">
-            动作：{item.subject.action}
-          </div>
-          <div className="text-xs text-foreground leading-relaxed">
-            结果：{item.subject.result}
+        {/* 事项标题 */}
+        <div className="mb-3">
+          <div className="text-sm font-semibold text-foreground leading-snug">
+            {item.title}
           </div>
         </div>
 
@@ -558,6 +501,90 @@ function WorkItemCard({ item, isSelected, onClick }: {
   )
 }
 
+// ─── TrackItemCard ─────────────────────────────────────
+function TrackItemCard({ item }: { item: TrackItem }) {
+  const statusConfig = {
+    normal:  { label: "正常", dot: "bg-green-500",     text: "text-green-600" },
+    at_risk: { label: "风险", dot: "bg-destructive",   text: "text-destructive" },
+    blocked: { label: "阻塞", dot: "bg-orange-500",    text: "text-orange-600" },
+    done:    { label: "完成", dot: "bg-muted-foreground", text: "text-muted-foreground" },
+  }
+  const typeLabel = { project: "项目", product: "产品", task: "任务" }
+  const relationLabel = { owner: "负责人", participant: "参与者", watcher: "关注" }
+
+  const sCfg = statusConfig[item.status]
+
+  return (
+    <div className={cn(
+      "bg-card border border-border rounded-xl overflow-hidden hover:shadow-sm transition-all",
+      (item.status === "at_risk" || item.status === "blocked") && "border-l-4",
+      item.status === "at_risk" && "border-l-destructive",
+      item.status === "blocked" && "border-l-orange-500",
+    )}>
+      <div className="px-4 py-3">
+        {/* 第一行：标签 + 时间 */}
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+            {typeLabel[item.type]}
+          </span>
+          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+            {relationLabel[item.relation]}
+          </span>
+          <span className="flex items-center gap-1 ml-1">
+            <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", sCfg.dot)} />
+            <span className={cn("text-[10px] font-medium", sCfg.text)}>{sCfg.label}</span>
+          </span>
+          <span className="text-[10px] text-muted-foreground ml-auto">{item.updatedAt}</span>
+        </div>
+
+        {/* 第二行：标题 */}
+        <div className="text-sm font-semibold text-foreground leading-snug mb-2.5">
+          {item.title}
+        </div>
+
+        {/* 第三行：进度条 + 处理人 + 请示状态，三者同行 */}
+        <div className="flex items-center gap-3 mb-2.5">
+          {/* 进度 */}
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+            <div className="w-20 h-1 bg-muted rounded-full overflow-hidden shrink-0">
+              <div
+                className={cn("h-full rounded-full", item.status === "at_risk" ? "bg-destructive" : item.status === "blocked" ? "bg-orange-500" : "bg-primary")}
+                style={{ width: `${item.progressPercent}%` }}
+              />
+            </div>
+            <span className="text-[10px] text-muted-foreground shrink-0">{item.progressPercent}% · {item.progressLabel}</span>
+          </div>
+          {/* 处理人 */}
+          <span className="text-[10px] text-muted-foreground shrink-0">{item.handler}</span>
+          {/* 请示状态 */}
+          {item.needsEscalation && !item.escalationSubmitted && (
+            <span className="text-[10px] font-medium text-orange-600 bg-orange-500/10 px-1.5 py-0.5 rounded-full shrink-0">待请示</span>
+          )}
+          {item.escalationSubmitted && (
+            <span className="text-[10px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded-full shrink-0">已请示</span>
+          )}
+        </div>
+
+        {/* 第四行：风险提示（仅有风险时显示） */}
+        {item.hasRisk && item.riskDesc && (
+          <div className="flex items-start gap-1.5 mb-2.5 px-2.5 py-1.5 rounded-lg bg-destructive/5 border border-destructive/15">
+            <AlertTriangle className="w-3 h-3 text-destructive shrink-0 mt-0.5" />
+            <span className="text-xs text-destructive leading-relaxed">{item.riskDesc}</span>
+          </div>
+        )}
+
+        {/* 第五行：AI研判 */}
+        <div className="flex items-start gap-1.5 pt-2 border-t border-border/60">
+          <Bot className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+          <span className="text-xs text-muted-foreground leading-relaxed">
+            <span className="font-semibold text-primary">AI · </span>{item.aiJudge}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── TabBtn ────────────────────────────────────────────
 function TabBtn({ active, label, count, countColor, onClick }: {
   active: boolean; label: string; count?: number; countColor?: string; onClick: () => void
@@ -586,4 +613,4 @@ function TabBtn({ active, label, count, countColor, onClick }: {
     </button>
   )
 }
-
+

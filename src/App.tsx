@@ -78,9 +78,11 @@ function App() {
         {/* 统一顶部导航 */}
         <V3Header activeTab={activeTab} onTabChange={handleTabChange} />
 
-        {/* 员工端 */}
-        {activeTab === "employee" && (
-          <div className="flex-1 overflow-hidden relative" ref={topRef}>
+        {/* 内容区：三端共用同一个 flex-1 容器，通过 hidden 切换，避免高度重排 */}
+        <div className="flex-1 overflow-hidden relative min-h-0">
+
+          {/* 员工端 */}
+          <div className={`absolute inset-0 ${activeTab === "employee" ? "" : "hidden"}`} ref={topRef}>
             <div className={chatState.isInChat ? "hidden" : "h-full overflow-y-auto"}>
               <WorkTips />
               <PerformancePanel />
@@ -104,21 +106,18 @@ function App() {
               </button>
             )}
           </div>
-        )}
 
-        {/* 业务支持端 */}
-        {activeTab === "support" && (
-          <div className="flex-1 overflow-hidden">
+          {/* 业务支持端 */}
+          <div className={`absolute inset-0 ${activeTab === "support" ? "" : "hidden"}`}>
             <SupportPage />
           </div>
-        )}
 
-        {/* 协同端 */}
-        {activeTab === "collab" && (
-          <div className="flex-1 overflow-hidden">
+          {/* 协同端 */}
+          <div className={`absolute inset-0 ${activeTab === "collab" ? "" : "hidden"}`}>
             <CollabPage />
           </div>
-        )}
+
+        </div>
       </div>
     </ChatContext.Provider>
   )
