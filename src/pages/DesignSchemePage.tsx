@@ -17,7 +17,7 @@ export function DesignSchemePage() {
       <header className="bg-white border-b border-slate-200 sticky top-0 z-20">
         <div className="max-w-[1200px] mx-auto px-8 pt-6">
           <h1 className="text-2xl font-bold mb-2">员工工作台三端协同——设计方案</h1>
-          <p className="text-sm text-slate-500 mb-6">基于630智能体项目会议纪要 · 公司级员工工作台三端建设</p>
+          <p className="text-sm text-slate-500 mb-6">基于518智能体项目会议纪要 · 公司级员工工作台三端建设</p>
           
           {/* Tabs */}
           <div className="flex gap-8 border-b border-transparent">
