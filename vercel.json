@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/report(.html)?", "destination": "/index.html?page=presentation" },
+    { "source": "/((?!api/|assets/|images/|favicon\\.ico|report-old\\.html).*)", "destination": "/index.html" }
+  ]
+}

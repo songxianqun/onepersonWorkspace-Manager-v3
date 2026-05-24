@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta http-equiv="refresh" content="0;url=/?page=presentation" />
 <title>员工工作台三端协同 - 设计方案</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -27,19 +27,16 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 </style>
-<script>
-  // 重定向到主应用的 presentation 页面
-  var baseUrl = window.location.origin + '/';
-  // 避免死循环
-  if (!window.location.search.includes('page=presentation')) {
-    window.location.replace(baseUrl + '?page=presentation');
-  }
-</script>
 </head>
 <body>
   <div class="loading">
     <div class="spinner"></div>
     <p>正在加载设计方案…</p>
   </div>
+  <script>
+    // fallback: 如果用 meta refresh 没跳转，用 JS 再试一次
+    var baseUrl = window.location.origin;
+    window.location.replace(baseUrl + '/?page=presentation');
+  </script>
 </body>
 </html>
