@@ -67,7 +67,7 @@ export function AIAssistants() {
   }
 
   return (
-    <div className="px-8 pb-32 max-w-[1200px] mx-auto">
+    <div className="w-full max-w-[1200px] mx-auto px-6 lg:px-8 pb-32">
       <div className="section-title mb-5">
         <div className="badge-dot" />
         AI 团队

@@ -6,54 +6,54 @@ import { useChatContext } from "@/App"
 
 const tips = [
   {
-    type: "urgent",
-    icon: AlertTriangle,
-    title: "3笔大额资金审批待处理",
-    desc: "涉及金额共计￥2,850,000.00，其中1笔超过审批时限，请尽快处理。",
-    badge: "紧急",
-    badgeVariant: "destructive" as const,
-    time: "10分钟前",
-    chatMsg: "帮我看看待处理的大额资金审批详情",
-  },
-  {
-    type: "risk",
-    icon: AlertTriangle,
-    title: "合规风险预警：某分支机构客户投诉率上升12%",
-    desc: "近30日该机构投诉量较上月同期增长明显，建议关注并安排核查。",
-    badge: "风险",
-    badgeVariant: "warning" as const,
-    time: "30分钟前",
-    chatMsg: "分析一下分支机构客户投诉率上升的风险情况",
-  },
-  {
-    type: "progress",
-    icon: TrendingUp,
-    title: "Q2重点项目「数字化转型」进度更新至68%",
-    desc: "已完成基础架构搭建和数据迁移，下阶段将启动业务模块开发。",
-    badge: "进展",
-    badgeVariant: "success" as const,
-    time: "1小时前",
-    chatMsg: "告诉我数字化转型项目的详细经营进展",
-  },
-  {
-    type: "approval",
-    icon: FileCheck,
-    title: "5项人事审批待签署",
-    desc: "包含2项晋升审批、1项调岗申请、2项离职交接确认。",
-    badge: "待办",
-    badgeVariant: "default" as const,
-    time: "2小时前",
-    chatMsg: "帮我查看待签署的人事审批详情",
-  },
-  {
-    type: "schedule",
+    type: "visit",
     icon: Clock,
-    title: "今日14:00 季度经营分析会",
-    desc: "参会人员已确认8人，会议材料已上传，请提前审阅财务报告。",
+    title: "今日14:00 拜访气派科技董秘",
+    desc: "讨论新一轮再融资（定增）事宜，请提前准备同行业近期定增案例及报价方案。",
     badge: "日程",
     badgeVariant: "secondary" as const,
     time: "今日",
-    chatMsg: "帮我准备季度经营分析会的要点",
+    chatMsg: "帮我准备气派科技拜访的材料和同行业定增案例",
+  },
+  {
+    type: "sales",
+    icon: TrendingUp,
+    title: "3名高净值客户的固收产品即将到期",
+    desc: "总计到期金额￥15,000,000，建议重点推荐下周新发行的「稳健盈」系列理财产品。",
+    badge: "销售",
+    badgeVariant: "success" as const,
+    time: "10分钟前",
+    chatMsg: "帮我生成一份发给这3位高净值客户的产品推荐话术",
+  },
+  {
+    type: "todo",
+    icon: FileCheck,
+    title: "芯原半导体IPO项目需补充资料",
+    desc: "财务组反馈需补充提交近三年完整的财务流水凭证及核心供应商访谈记录。",
+    badge: "待办",
+    badgeVariant: "default" as const,
+    time: "30分钟前",
+    chatMsg: "列出芯原半导体IPO项目还缺少的具体财务资料清单",
+  },
+  {
+    type: "rework",
+    icon: AlertTriangle,
+    title: "提交的《蓝海企业授信报告》被风控退回",
+    desc: "风控中心提示需补充目标企业所在行业的最新周期分析数据，请修改后重新提交。",
+    badge: "退回",
+    badgeVariant: "destructive" as const,
+    time: "1小时前",
+    chatMsg: "帮我搜集蓝海企业所在行业的最新周期分析数据",
+  },
+  {
+    type: "opportunity",
+    icon: TrendingUp,
+    title: "挖掘到一条新的投行业务线索",
+    desc: "系统监测到您负责跟进的「星云科技」近期发生实控人变更，可能存在并购重组机会。",
+    badge: "商机",
+    badgeVariant: "warning" as const,
+    time: "2小时前",
+    chatMsg: "帮我分析星云科技实控人变更可能带来的并购重组机会",
   },
 ]
 
@@ -62,18 +62,19 @@ export function WorkTips() {
 
   const handleTipClick = (tip: (typeof tips)[0]) => {
     const agentMap: Record<string, { name: string; image: string }> = {
-      urgent: { name: "审批助手", image: "/images/agent-approval.png" },
-      risk: { name: "风控合规助手", image: "/images/agent-risk.png" },
-      progress: { name: "经营分析助手", image: "/images/agent-business.png" },
-      approval: { name: "审批助手", image: "/images/agent-approval.png" },
-      schedule: { name: "战略决策助手", image: "/images/agent-strategy.png" },
+      visit: { name: "投行业务助理", image: "/images/avatar-invest-banking.png" },
+      sales: { name: "零售业务助理", image: "/images/avatar-retail.png" },
+      todo: { name: "投行业务助理", image: "/images/avatar-invest-banking.png" },
+      rework: { name: "交叉验证助理", image: "/images/avatar-crosscheck.png" },
+      opportunity: { name: "机构业务助理", image: "/images/avatar-institution.png" },
     }
-    const agent = agentMap[tip.type] || agentMap.urgent
+    const agent = agentMap[tip.type] || agentMap.todo
     openChat(agent, tip.chatMsg)
   }
 
   return (
-    <Card className="mx-8 mb-6 animate-fade-in max-w-[1200px] xl:mx-auto">
+    <div className="w-full max-w-[1200px] mx-auto px-6 lg:px-8 mb-6 mt-6">
+      <Card className="animate-fade-in w-full border-0 shadow-sm ring-1 ring-border">
       <div className="p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="section-title">
@@ -132,6 +133,7 @@ export function WorkTips() {
           })}
         </div>
       </div>
-    </Card>
+      </Card>
+    </div>
   )
 }

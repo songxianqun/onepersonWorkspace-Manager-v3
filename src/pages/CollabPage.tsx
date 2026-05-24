@@ -21,6 +21,11 @@ import {
   Plus,
   Filter,
   ArrowUpRight,
+  AlertTriangle,
+  Award,
+  UserMinus,
+  Target,
+  Briefcase,
 } from "lucide-react"
 import { agendas, type Agenda, type AgendaPriority, type AgendaStatus } from "@/data/supportData"
 import { PageChatBar } from "@/components/PageChatBar"
@@ -138,12 +143,13 @@ export function CollabPage() {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col pb-24">
       {/* 整体可滚动区域：导航卡片 + 内容 */}
       <div className="flex-1 overflow-y-auto">
         {/* 顶部五模块导航卡片（不吸顶，随页面滚动） */}
-        <div className="border-b border-border bg-card px-6 py-4">
-          <div className="grid grid-cols-5 gap-3 max-w-[1400px]">
+        <div className="border-b border-border bg-card">
+          <div className="w-full max-w-[1200px] mx-auto px-8 py-4">
+            <div className="grid grid-cols-5 gap-3">
             {sectionConfig.map((sec) => {
               const Icon = sec.icon
               const isActive = activeSection === sec.key
@@ -206,20 +212,23 @@ export function CollabPage() {
                 </button>
               )
             })}
+            </div>
           </div>
         </div>
 
         {/* 内容区（随整体页面滚动） */}
-        {activeSection === "agenda" && (
-          <AgendaSection
-            selectedId={selectedId}
-            setSelectedId={setSelectedId}
-          />
-        )}
-        {activeSection === "business" && <BusinessSection />}
-        {activeSection === "risk" && <RiskSection />}
-        {activeSection === "team" && <TeamSection />}
-        {activeSection === "emergency" && <EmergencySection />}
+        <div className="w-full max-w-[1200px] mx-auto px-8 pb-24">
+          {activeSection === "agenda" && (
+            <AgendaSection
+              selectedId={selectedId}
+              setSelectedId={setSelectedId}
+            />
+          )}
+          {activeSection === "business" && <BusinessSection />}
+          {activeSection === "risk" && <RiskSection />}
+          {activeSection === "team" && <TeamSection />}
+          {activeSection === "emergency" && <EmergencySection />}
+        </div>
       </div>
 
       {/* 底部对话输入栏 */}
@@ -245,16 +254,18 @@ function AgendaSection({
 
   return (
     <div className="flex">
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 py-5 space-y-4">
         {/* 区块标题 */}
-        <div className="shrink-0 border-b border-border px-6 py-3 bg-background/80 flex items-center gap-2">
-          <FileCheck className="w-4 h-4 text-primary" />
-          <span className="text-base font-bold text-foreground">请示事项</span>
-          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">
-            {agendas.filter(a => !["closed"].includes(a.status)).length}
-          </span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <FileCheck className="w-4 h-4 text-primary" />
+            <span className="text-base font-bold text-foreground">请示事项</span>
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">
+              {agendas.filter(a => !["closed"].includes(a.status)).length}
+            </span>
+          </div>
         </div>
-        <div className="p-5 space-y-3">
+        <div className="space-y-3">
           {filtered.map((agenda) => (
             <AgendaCard
               key={agenda.id}
@@ -292,9 +303,17 @@ function BusinessSection() {
     "华东分中心表现突出，可考虑推广其客户经营模式到其他区域",
   ]
   return (
-    <div className="p-6">
-      <div className="max-w-[1200px] space-y-5">
-        <SectionTitle icon={BarChart3} title="经营看板" sub="本月核心经营指标概览" />
+    <div className="py-5">
+      <div className="w-full space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <BarChart3 className="w-4 h-4 text-primary" />
+            <span className="text-base font-bold text-foreground">经营看板</span>
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-muted text-foreground">
+              {metrics.length} 项指标
+            </span>
+          </div>
+        </div>
         <div className="grid grid-cols-4 gap-4">
           {metrics.map((m) => (
             <div key={m.label} className="bg-card border border-border rounded-xl p-4">
@@ -345,13 +364,17 @@ function RiskSection() {
     "整体建议：月底前组织一次合规专项会议，重点复盘适当性管理流程",
   ]
   return (
-    <div className="p-6">
-      <div className="max-w-[1200px] space-y-5">
-        <SectionTitle icon={Shield} title="风险提示" sub="当前风险全景概览" />
-        <div className="grid grid-cols-3 gap-4">
-          <RiskStat label="高风险" value={3} color="text-destructive" bg="bg-destructive/8" />
-          <RiskStat label="中风险" value={5} color="text-warning" bg="bg-warning/8" />
-          <RiskStat label="本月已化解" value={12} color="text-success" bg="bg-success/8" />
+    <div className="py-5">
+      <div className="w-full space-y-4">
+        {/* 区块标题 */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <Shield className="w-4 h-4 text-primary" />
+            <span className="text-base font-bold text-foreground">风险提示</span>
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">
+              {risks.length}
+            </span>
+          </div>
         </div>
         <div className="space-y-3">
           {risks.map((r, i) => (
@@ -381,82 +404,150 @@ function RiskSection() {
 
 // ─── 队伍状况 ─────────────────────────────────────────
 function TeamSection() {
-  const overview = [
-    { label: "在职总人数", value: "386人", sub: "本月净增+5" },
-    { label: "本月入职", value: "8人", sub: "" },
-    { label: "本月离职", value: "3人", sub: "" },
-    { label: "整体出勤率", value: "96.2%", sub: "+0.3%" },
+  // 顶部关键指标
+  const topMetrics = [
+    { label: "投行直属团队人数", value: "249", unit: "人", sub: "正式 240 / 实习 9", icon: Users, color: "text-foreground" },
+    { label: "开展投行业务总人数", value: "339", unit: "人", sub: "占公司总人数比例较去年增加5%", icon: Briefcase, color: "text-foreground" },
+    { label: "具备产业经验人员", value: "154", unit: "人", sub: "占全部员工 62%", icon: Target, color: "text-foreground" },
+    { label: "高创收人员流失数", value: "5", unit: "人", sub: "需关注", icon: UserMinus, color: "text-destructive", highlight: true },
   ]
-  const performance = [
-    { label: "优秀", value: 61, pct: "15.8%", color: "bg-success" },
-    { label: "良好", value: 113, pct: "29.3%", color: "bg-primary" },
-    { label: "一般", value: 32, pct: "8.3%", color: "bg-warning" },
-    { label: "待改进", value: 8, pct: "2.1%", color: "bg-destructive" },
+
+  // 项目产业覆盖缺口
+  const coverageGaps = [
+    { title: "芯原半导体IPO", priority: "高优先级", industry: "电子信息产业", gap: "缺口 3人", desc: "亟需电子硬科技行业经验人员" },
+    { title: "新能源电池材料", priority: "高优先级", industry: "新能源产业", gap: "缺口 2人", desc: "缺乏锂电材料行业背景人员" },
+    { title: "生物医药并购", priority: "中优先级", industry: "生物医药", gap: "缺口 1人", desc: "需补充临床研发背景人员" },
   ]
-  const keyPeople = [
-    { name: "李明", role: "运营总监", status: "在岗", ok: true },
-    { name: "王芳", role: "科技部总经理", status: "在岗", ok: true },
-    { name: "陈静", role: "客户部总经理", status: "在岗", ok: true },
-    { name: "赵强", role: "市场部总经理", status: "出差中", ok: false },
-    { name: "周涛", role: "合规总监", status: "在岗", ok: true },
+
+  // 效益红黑榜
+  const performanceRank = [
+    { rank: 1, name: "李益丰", dept: "新兴产业组", level: "中坚层", tag: "高成本高产出", tagColor: "bg-destructive/10 text-destructive" },
+    { rank: 2, name: "周明", dept: "上海一组", level: "承做岗", tag: "低成本高产出", tagColor: "bg-success/10 text-success" },
+    { rank: 3, name: "王磊", dept: "华北二组", level: "负责人", tag: "高成本高产出", tagColor: "bg-destructive/10 text-destructive" },
+    { rank: 4, name: "陈静", dept: "华南一组", level: "承做岗", tag: "低成本高产出", tagColor: "bg-success/10 text-success" },
   ]
+
+  // 高创收人员流失风险名单
+  const turnoverRisks = [
+    { name: "张凌风", role: "高创收团队负责人", risk: "建议优先挽留", desc: "近期报销频次显著低于往期，多次拒接跨部门协同项目，且持股解禁期将至，表现出明显工作意愿降低。" },
+    { name: "赵强", role: "机构业务部总监", risk: "建议关注", desc: "连续两季度绩效下滑，已接触猎头，有明确外部意向。" },
+  ]
+
   const aiAdvice = [
-    "离职3人均为一般岗位，暂无核心人才流失风险",
-    "「待改进」8人建议启动绩效辅导计划，避免累积为管理问题",
-    "建议关注运营部和科技部的加班数据，近期项目密集可能影响团队稳定性",
-    "Q3有2位核心骨干合同到期，建议提前安排续签沟通",
+    "高创收人员张凌风为TOP3%绩效人员，建议本周内由分管VP亲自沟通，识别核心诉求并制定挽留方案",
+    "「芯原半导体IPO」项目缺口3人，建议启动内部调配+外部猎聘双轨并行，避免影响IPO申报进度",
+    "李益丰团队人效排名头部但成本偏高，建议Q3启动流程优化，降低非必要外包依赖",
   ]
+
   return (
-    <div className="p-6">
-      <div className="max-w-[1200px] space-y-5">
-        <SectionTitle icon={Users} title="队伍状况" sub="人员变动与绩效分布" />
+    <div className="py-5">
+      <div className="w-full space-y-4">
+        {/* 标题 */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <Users className="w-4 h-4 text-primary" />
+            <span className="text-base font-bold text-foreground">队伍状况</span>
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-muted text-foreground">
+              5 个团队
+            </span>
+          </div>
+        </div>
+
+        {/* 顶部关键指标 */}
         <div className="grid grid-cols-4 gap-4">
-          {overview.map((o) => (
-            <div key={o.label} className="bg-card border border-border rounded-xl p-4">
-              <div className="text-xs text-muted-foreground mb-2">{o.label}</div>
-              <div className="text-2xl font-bold text-foreground">{o.value}</div>
-              {o.sub && <div className="text-xs text-success mt-1">{o.sub}</div>}
+          {topMetrics.map((m) => (
+            <div key={m.label} className={cn("bg-card border rounded-xl p-5", m.highlight ? "border-destructive/20" : "border-border")}>
+              <div className="flex items-center gap-2 mb-3">
+                <m.icon className={cn("w-4 h-4", m.color)} />
+                <span className="text-xs text-muted-foreground">{m.label}</span>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className={cn("text-3xl font-extrabold tracking-tight", m.highlight ? "text-destructive" : "text-foreground")}>{m.value}</span>
+                <span className={cn("text-sm", m.highlight ? "text-destructive" : "text-muted-foreground")}>{m.unit}</span>
+              </div>
+              <div className="mt-2">
+                <span className={cn("text-xs px-2 py-0.5 rounded-full", m.highlight ? "bg-destructive/10 text-destructive font-bold" : "text-muted-foreground bg-muted")}>{m.sub}</span>
+              </div>
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-2 gap-4">
+
+        {/* 下部三列 */}
+        <div className="grid grid-cols-3 gap-4">
+          {/* 项目产业覆盖缺口 */}
           <div className="bg-card border border-border rounded-xl p-5">
-            <div className="text-sm font-semibold mb-4">绩效分布</div>
+            <div className="flex items-center gap-2 mb-4">
+              <Target className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold text-foreground">项目产业覆盖缺口</span>
+            </div>
             <div className="space-y-3">
-              {performance.map((p) => (
-                <div key={p.label} className="flex items-center gap-3">
-                  <span className="text-xs text-muted-foreground w-12 shrink-0">{p.label}</span>
-                  <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
-                    <div className={cn("h-full rounded-full", p.color)} style={{ width: `${(p.value / 386) * 100 * 3}%`, maxWidth: "100%" }} />
+              {coverageGaps.map((g, i) => (
+                <div key={i} className="bg-muted/50 border border-border rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold text-foreground">{g.title}</span>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">{g.priority}</span>
                   </div>
-                  <span className="text-sm font-medium text-foreground w-8">{p.value}</span>
-                  <span className="text-xs text-muted-foreground w-10 text-right">{p.pct}</span>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs text-muted-foreground">{g.industry}</span>
+                    <span className="text-xs text-destructive font-medium">{g.gap}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{g.desc}</p>
                 </div>
               ))}
             </div>
           </div>
+
+          {/* 效益红黑榜 */}
           <div className="bg-card border border-border rounded-xl p-5">
-            <div className="text-sm font-semibold mb-4">核心骨干状态</div>
-            <div className="space-y-2.5">
-              {keyPeople.map((p) => (
-                <div key={p.name} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">
-                      {p.name[0]}
+            <div className="flex items-center gap-2 mb-4">
+              <Award className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold text-foreground">效益红黑榜（本月）</span>
+            </div>
+            <div className="space-y-3">
+              {performanceRank.map((p) => (
+                <div key={p.rank} className="flex items-start gap-3">
+                  <div className={cn("shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold", p.rank <= 2 ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground")}>
+                    {p.rank}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-foreground">{p.name}</span>
+                      <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", p.tagColor)}>{p.tag}</span>
                     </div>
-                    <div>
-                      <div className="text-sm font-medium text-foreground">{p.name}</div>
-                      <div className="text-xs text-muted-foreground">{p.role}</div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs text-muted-foreground">{p.dept}</span>
+                      <span className="text-xs text-muted-foreground">·</span>
+                      <span className="text-xs text-muted-foreground">{p.level}</span>
                     </div>
                   </div>
-                  <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", p.ok ? "bg-success/10 text-success" : "bg-warning/10 text-warning")}>
-                    {p.status}
-                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 高创收人员流失风险名单 */}
+          <div className="bg-card border border-border rounded-xl p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <AlertTriangle className="w-4 h-4 text-destructive" />
+              <span className="text-sm font-semibold text-foreground">高创收人员流失风险名单</span>
+            </div>
+            <div className="space-y-3">
+              {turnoverRisks.map((r, i) => (
+                <div key={i} className="bg-destructive/4 border border-destructive/10 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-foreground">{r.name}</span>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{r.role}</span>
+                    </div>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-destructive text-white">{r.risk}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{r.desc}</p>
                 </div>
               ))}
             </div>
           </div>
         </div>
+
         <AIAdviceCard advice={aiAdvice} />
       </div>
     </div>
@@ -557,7 +648,7 @@ function EmergencySection() {
   }
 
   return (
-    <div className="p-5 space-y-4">
+    <div className="py-5 w-full space-y-4">
       {/* 顶部标题栏 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
@@ -681,28 +772,6 @@ function EmergencySection() {
 }
 
 // ─── 公共子组件 ───────────────────────────────────────
-function SectionTitle({ icon: Icon, title, sub }: { icon: React.ElementType; title: string; sub: string }) {
-  return (
-    <div className="flex items-center gap-3">
-      <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-        <Icon className="w-5 h-5 text-primary" />
-      </div>
-      <div>
-        <div className="text-base font-bold text-foreground">{title}</div>
-        <div className="text-xs text-muted-foreground">{sub}</div>
-      </div>
-    </div>
-  )
-}
-
-function RiskStat({ label, value, color, bg }: { label: string; value: number; color: string; bg: string }) {
-  return (
-    <div className={cn("rounded-xl p-4 flex items-center gap-3", bg)}>
-      <span className={cn("text-3xl font-bold", color)}>{value}</span>
-      <span className="text-sm text-muted-foreground">{label}</span>
-    </div>
-  )
-}
 
 function AIAdviceCard({ advice }: { advice: string[] }) {
   return (
@@ -825,7 +894,7 @@ function AgendaDetailPanel({ agenda, onClose }: { agenda: Agenda; onClose: () =>
   const sCfg = statusConfig[agenda.status]
 
   return (
-    <aside className="w-96 shrink-0 border-l border-border bg-card">
+    <aside className="w-[35%] min-w-[320px] max-w-[480px] shrink-0 border-l border-border bg-card">
       <div className="bg-card border-b border-border px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className={cn("p-1.5 rounded-lg", typeCfg.bg)}>

@@ -26,7 +26,7 @@ export function PerformancePanel() {
   const [calculated, setCalculated] = useState(true)
 
   return (
-    <div className="px-8 pb-4 max-w-[1200px] mx-auto">
+    <div className="w-full max-w-[1200px] mx-auto px-6 lg:px-8 pb-4">
       {/* 标题 + 收起展开按钮 */}
       <button
         onClick={() => setExpanded(!expanded)}

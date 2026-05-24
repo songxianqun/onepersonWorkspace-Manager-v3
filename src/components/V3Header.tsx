@@ -33,12 +33,13 @@ export function V3Header({ activeTab, onTabChange }: Props) {
   const isEmployee = activeTab === "employee"
 
   return (
-    <header
-      className={cn(
-        "border-b border-border bg-card shrink-0 transition-all duration-200",
-        isEmployee ? "px-8 pt-5 pb-4" : "px-6 h-16 flex items-center gap-6"
-      )}
-    >
+    <header className="border-b border-border bg-card shrink-0 transition-all duration-200">
+      <div
+        className={cn(
+          "w-full max-w-[1200px] mx-auto px-6 lg:px-8 transition-all duration-200",
+          isEmployee ? "pt-5 pb-4" : "h-16 flex items-center gap-6"
+        )}
+      >
       {isEmployee ? (
         /* ── 员工端展开头部 ── */
         <>
@@ -62,20 +63,20 @@ export function V3Header({ activeTab, onTabChange }: Props) {
                       <button
                         onClick={() => onTabChange(tab.key)}
                         className={cn(
-                          "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 relative",
+                          "flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-150 relative",
                           isActive
-                            ? "bg-primary/10 text-primary"
+                            ? "bg-primary/10 text-primary font-semibold"
                             : "text-muted-foreground hover:text-foreground hover:bg-muted"
                         )}
                       >
-                        <Icon className="w-3.5 h-3.5" />
+                        <Icon className="w-4 h-4" />
                         <span>{tab.label}</span>
                         {tab.dot && !isActive && (
-                          <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-destructive" />
+                          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-destructive" />
                         )}
                       </button>
                       {i < tabs.length - 1 && (
-                        <ChevronRight className="w-3 h-3 text-border mx-0.5" />
+                        <ChevronRight className="w-3.5 h-3.5 text-border mx-0.5" />
                       )}
                     </div>
                   )
@@ -180,6 +181,7 @@ export function V3Header({ activeTab, onTabChange }: Props) {
           </div>
         </>
       )}
+      </div>
     </header>
   )
 }

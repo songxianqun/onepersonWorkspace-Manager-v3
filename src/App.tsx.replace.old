@@ -1,0 +1,10 @@
+
+            {chatState.isInChat && (
+              <button
+                onClick={exitChat}
+                className="fixed bottom-6 right-6 z-40 w-11 h-11 rounded-full bg-card border border-border shadow-elevated flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/30 transition-all duration-200"
+                title="返回工作�?
+              >
+                <ArrowUp className="w-5 h-5" />
+              </button>
+            )}

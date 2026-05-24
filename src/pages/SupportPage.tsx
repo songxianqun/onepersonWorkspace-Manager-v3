@@ -56,21 +56,21 @@ const priorityConfig: Record<Priority, { label: string; color: string; bg: strin
   watch: { label: "关注", color: "text-blue-500", bg: "bg-blue-500/10", icon: Eye },
 }
 
-// 截图样式：AI 建议文字 + 右侧彩色一键按钮
+// 截图样式：AI 建议文字 + 右侧彩色操作按钮
 const aiActionConfig: Record<string, { suggest: string; btnLabel: string; btnClass: string }> = {
   supplement: {
     suggest: "建议补录",
-    btnLabel: "一键打回补录",
+    btnLabel: "打回补录",
     btnClass: "bg-destructive text-white hover:bg-destructive/90",
   },
   handle: {
     suggest: "建议通过",
-    btnLabel: "一键复核通过",
+    btnLabel: "复核通过",
     btnClass: "bg-green-600 text-white hover:bg-green-600/90",
   },
   escalate: {
     suggest: "建议协同",
-    btnLabel: "一键提请协同",
+    btnLabel: "提请协同",
     btnClass: "bg-destructive text-white hover:bg-destructive/90",
   },
 }
@@ -78,7 +78,7 @@ const aiActionConfig: Record<string, { suggest: string; btnLabel: string; btnCla
 // 规则知会专属：介入按钮
 const ruleActionConfig = {
   suggest: "建议介入",
-  btnLabel: "一键主动介入",
+  btnLabel: "主动介入",
   btnClass: "bg-orange-500 text-white hover:bg-orange-500/90",
 }
 
@@ -103,8 +103,8 @@ export function SupportPage() {
   })
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex flex-1 overflow-hidden">
+    <div className="flex flex-col h-full">
+      <div className="flex flex-1 overflow-hidden pb-24">
 
         {/* ── 左侧 Gemini 风格侧边栏 ── */}
         <aside
@@ -201,29 +201,31 @@ export function SupportPage() {
 
         {/* ── 中间主内容区 ── */}
         <main className="flex-1 overflow-y-auto min-w-0">
-
           {/* 智能体入口行（无标题，与员工端一致） */}
-          <div className="border-b border-border bg-card px-5 py-3">
-            <div className="flex items-center gap-5 overflow-x-auto pb-1">
-              {supportAgents.map((agent) => (
-                <button
-                  key={agent.name}
-                  onClick={() => openChat(agent)}
-                  className="flex flex-col items-center gap-1.5 group shrink-0"
-                >
-                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-border bg-card group-hover:border-primary/40 group-hover:scale-105 transition-all duration-300 shadow-sm">
-                    <img src={agent.image} alt={agent.name} className="w-full h-full object-cover" />
-                  </div>
-                  <span className="text-[11px] text-muted-foreground group-hover:text-primary transition-colors whitespace-nowrap">
-                    {agent.name}
-                  </span>
-                </button>
-              ))}
+          <div className="border-b border-border bg-card py-3">
+            <div className="w-full max-w-[1200px] mx-auto px-8">
+              <div className="flex items-center gap-5 overflow-x-auto pb-1">
+                {supportAgents.map((agent) => (
+                  <button
+                    key={agent.name}
+                    onClick={() => openChat(agent)}
+                    className="flex flex-col items-center gap-1.5 group shrink-0"
+                  >
+                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-border bg-card group-hover:border-primary/40 group-hover:scale-105 transition-all duration-300 shadow-sm">
+                      <img src={agent.image} alt={agent.name} className="w-full h-full object-cover" />
+                    </div>
+                    <span className="text-[11px] text-muted-foreground group-hover:text-primary transition-colors whitespace-nowrap">
+                      {agent.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Tab 切换 */}
-          <div className="px-5 pt-3 sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
+          <div className="w-full max-w-[1200px] mx-auto px-8 pb-24">
+            {/* Tab 切换 */}
+            <div className="pt-3 sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
             <div className="flex items-center gap-0">
               <TabBtn
                 active={mainTab === "items"}
@@ -248,39 +250,44 @@ export function SupportPage() {
             </div>
           </div>
 
-          <div className="p-5 space-y-3">
-            {/* ── 工作提示 tab ── */}
-            {mainTab === "items" && (
-              <>
-                {filteredItems.length === 0 && (
-                  <div className="text-center py-16 text-muted-foreground text-sm">暂无事项</div>
-                )}
-                {filteredItems.map((item) => (
-                  <WorkItemCard
-                    key={item.id}
-                    item={item}
-                    isSelected={selectedItem?.id === item.id}
-                    onClick={() => setSelectedItem(item.id === selectedItem?.id ? null : item)}
-                  />
-                ))}
-              </>
-            )}
+          <div className="flex items-start">
+            <div className="flex-1 min-w-0 py-5 space-y-3">
+              {/* ── 工作提示 tab ── */}
+              {mainTab === "items" && (
+                <>
+                  {filteredItems.length === 0 && (
+                    <div className="text-center py-16 text-muted-foreground text-sm">暂无事项</div>
+                  )}
+                  {filteredItems.map((item) => (
+                    <WorkItemCard
+                      key={item.id}
+                      item={item}
+                      isSelected={selectedItem?.id === item.id}
+                      onClick={() => setSelectedItem(item.id === selectedItem?.id ? null : item)}
+                    />
+                  ))}
+                </>
+              )}
 
-            {/* ── 事项看板 tab ── */}
-            {mainTab === "board" && (
-              <>
-                {trackItems.map((item) => (
-                  <TrackItemCard key={item.id} item={item} />
-                ))}
-              </>
+              {/* ── 事项看板 tab ── */}
+              {mainTab === "board" && (
+                <>
+                  {trackItems.map((item) => (
+                    <TrackItemCard key={item.id} item={item} />
+                  ))}
+                </>
+              )}
+            </div>
+
+            {/* ── 右侧详情面板 ── */}
+            {selectedItem && (
+              <div className="w-80 shrink-0 border-l border-border bg-card">
+                <ItemDetailPanel item={selectedItem} onClose={() => setSelectedItem(null)} />
+              </div>
             )}
           </div>
+          </div>
         </main>
-
-        {/* ── 右侧详情面板 ── */}
-        {selectedItem && (
-          <ItemDetailPanel item={selectedItem} onClose={() => setSelectedItem(null)} />
-        )}
       </div>
 
       {/* 底部对话输入栏 */}

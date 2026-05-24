@@ -7,7 +7,8 @@ import { AIChatInput } from "@/components/AIChatInput"
 import { V3Header, type V3Tab } from "@/components/V3Header"
 import { SupportPage } from "@/pages/SupportPage"
 import { CollabPage } from "@/pages/CollabPage"
-import { ArrowUp } from "lucide-react"
+import { DesignSchemePage } from "@/pages/DesignSchemePage"
+// import { ArrowUp } from "lucide-react"
 
 interface ChatContextType {
   isInChat: boolean
@@ -47,6 +48,8 @@ function App() {
   })
   const topRef = useRef<HTMLDivElement>(null)
   const chatRef = useRef<HTMLDivElement>(null)
+
+  const isPresentation = new URLSearchParams(window.location.search).get("page") === "presentation"
 
   const openChat = useCallback(
     (agent: { name: string; image: string }, message?: string) => {
@@ -93,6 +96,10 @@ function App() {
     return () => window.removeEventListener("popstate", handlePopState)
   }, [])
 
+  if (isPresentation) {
+    return <DesignSchemePage />
+  }
+
   return (
     <ChatContext.Provider value={{ ...chatState, openChat, exitChat }}>
       <div className="h-screen flex flex-col bg-background overflow-hidden">
@@ -117,15 +124,7 @@ function App() {
               </div>
             )}
 
-            {chatState.isInChat && (
-              <button
-                onClick={exitChat}
-                className="fixed bottom-6 right-6 z-40 w-11 h-11 rounded-full bg-card border border-border shadow-elevated flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/30 transition-all duration-200"
-                title="返回工作台"
-              >
-                <ArrowUp className="w-5 h-5" />
-              </button>
-            )}
+            
           </div>
 
           {/* 业务支持端 */}

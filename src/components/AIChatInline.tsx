@@ -96,32 +96,33 @@ export function AIChatInline() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Chat Header */}
-      <div className="sticky top-0 z-10 bg-card/95 backdrop-blur border-b border-border px-6 py-3">
-        <div className="max-w-[800px] mx-auto flex items-center gap-3">
-          <button
-            onClick={exitChat}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-          >
-            <ArrowUp className="w-4 h-4" />
-            <span>返回工作台</span>
-          </button>
-          <div className="w-px h-5 bg-border" />
-          <div className="w-8 h-8 rounded-full overflow-hidden border border-border">
-            <img src={agentImage} alt={agentName} className="w-full h-full object-cover" />
-          </div>
-          <div>
-            <div className="text-sm font-medium text-foreground">{agentName}</div>
-            <div className="text-[11px] text-muted-foreground flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-success inline-block" />
-              在线
+      <div className="sticky top-0 z-10 bg-card/95 backdrop-blur border-b border-border px-6 lg:px-8 py-3">
+        <div className="max-w-[1200px] mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full overflow-hidden border border-border">
+              <img src={agentImage} alt={agentName} className="w-full h-full object-cover" />
+            </div>
+            <div>
+              <div className="text-sm font-medium text-foreground">{agentName}</div>
+              <div className="text-[11px] text-muted-foreground flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-success inline-block" />
+                在线
+              </div>
             </div>
           </div>
+          <button
+            onClick={exitChat}
+            className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+          >
+            <ArrowUp className="w-4 h-4 -rotate-90" />
+            <span>返回工作台</span>
+          </button>
         </div>
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 px-6 py-6">
-        <div className="max-w-[800px] mx-auto space-y-5">
+      <div className="flex-1 px-6 lg:px-8 py-6">
+        <div className="max-w-[1200px] mx-auto space-y-5">
           {messages.map((msg) => (
             <div
               key={msg.id}
@@ -159,10 +160,10 @@ export function AIChatInline() {
       </div>
 
       {/* Fixed Input */}
-      <div className="sticky bottom-0 bg-gradient-to-t from-background via-background to-transparent pt-4 pb-4 px-6">
-        <div className="max-w-[800px] mx-auto">
-          <div className="flex items-center gap-3 bg-card border border-border rounded-2xl px-4 py-2.5 shadow-elevated focus-within:shadow-glow focus-within:border-primary/40 transition-shadow">
-            <Sparkles className="w-4 h-4 text-primary shrink-0" />
+      <div className="sticky bottom-0 bg-gradient-to-t from-background via-background to-transparent pt-4 pb-4 px-6 lg:px-8">
+        <div className="max-w-[1200px] mx-auto">
+          <div className="flex items-center gap-4 bg-card border border-border rounded-2xl px-5 py-3.5 shadow-elevated focus-within:shadow-glow focus-within:border-primary/40 transition-shadow">
+            <Sparkles className="w-5 h-5 text-primary shrink-0" />
             <input
               type="text"
               value={input}
@@ -174,9 +175,9 @@ export function AIChatInline() {
             <button
               onClick={handleSend}
               disabled={!input.trim()}
-              className="w-8 h-8 rounded-xl bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-30 hover:bg-primary/90 transition-all shrink-0"
+              className="w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-30 hover:bg-primary/90 transition-all shrink-0"
             >
-              <Send className="w-3.5 h-3.5" />
+              <Send className="w-4 h-4" />
             </button>
           </div>
           <p className="text-center text-[11px] text-muted-foreground/60 mt-2">

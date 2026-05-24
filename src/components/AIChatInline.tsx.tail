@@ -1,0 +1,22 @@
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              placeholder={`�?{agentName}提问...`}
+              className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
+            />
+            <button
+              onClick={handleSend}
+              disabled={!input.trim()}
+              className="w-8 h-8 rounded-xl bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-30 hover:bg-primary/90 transition-all shrink-0"
+            >
+              <Send className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <p className="text-center text-[11px] text-muted-foreground/60 mt-2">
+            AI 助手基于内部数据提供参考，重要决策请以实际数据为准
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}

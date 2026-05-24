@@ -1,0 +1,22 @@
+                <ArrowUp className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+
+          {/* 业务支持�?*/}
+          <div className={`absolute inset-0 ${activeTab === "support" ? "" : "hidden"}`}>
+            <SupportPage />
+          </div>
+
+          {/* 协同�?*/}
+          <div className={`absolute inset-0 ${activeTab === "collab" ? "" : "hidden"}`}>
+            <CollabPage />
+          </div>
+
+        </div>
+      </div>
+    </ChatContext.Provider>
+  )
+}
+
+export default App

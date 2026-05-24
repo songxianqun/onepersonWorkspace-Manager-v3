@@ -14,7 +14,7 @@ export function AIChatInput() {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-background via-background to-transparent pt-6 pb-5 px-8">
+    <div className="fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-background via-background to-transparent pt-6 pb-5 px-6 lg:px-8">
       <div className="max-w-[1200px] mx-auto">
         <div className="flex items-center gap-4 bg-card border border-border rounded-2xl px-5 py-3.5 shadow-elevated transition-shadow focus-within:shadow-glow focus-within:border-primary/40">
           <Sparkles className="w-5 h-5 text-primary shrink-0" />
