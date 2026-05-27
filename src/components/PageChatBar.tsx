@@ -38,7 +38,6 @@ interface Props {
 }
 
 export function PageChatBar({ placeholder, agentName = "智能助手", context = "support" }: Props) {
-  const [open, setOpen] = useState(false)
   const [input, setInput] = useState("")
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -54,108 +53,51 @@ export function PageChatBar({ placeholder, agentName = "智能助手", context =
   const nextId = useRef(2)
   const bottomRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    if (open) {
-      setTimeout(() => {
-        bottomRef.current?.scrollIntoView({ behavior: "smooth" })
-      }, 50)
-    }
-  }, [messages, open])
+  // 向外暴露的方法：让 SupportPage/CollabPage 可以追加消息
+  const addMessage = (role: "user" | "assistant", content: string) => {
+    const id = nextId.current++
+    setMessages((prev) => [...prev, { id, role, content, time: now() }])
+    setTimeout(() => {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+    }, 50)
+  }
+
+  PageChatBar.addMessage = addMessage
 
   const handleSend = () => {
     const msg = input.trim()
     if (!msg) return
     setInput("")
-    setOpen(true)
-
     const uid = nextId.current++
-    const aid = nextId.current++
     setMessages((prev) => [...prev, { id: uid, role: "user", content: msg, time: now() }])
     setTimeout(() => {
+      const aid = nextId.current++
       setMessages((prev) => [...prev, { id: aid, role: "assistant", content: getReply(msg), time: now() }])
     }, 500)
+    setTimeout(() => {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+    }, 50)
   }
 
   return (
     <>
-      {/* 展开的对话面板 - 悬浮在输入框上方 */}
-      {open && (
-        <div className="fixed bottom-[88px] left-0 right-0 z-40 px-6 lg:px-8">
-          <div className="max-w-[1200px] mx-auto">
-            <div className="h-64 flex flex-col bg-card border border-border rounded-2xl shadow-elevated overflow-hidden">
-              {/* 对话面板头部 */}
-              <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/30 shrink-0">
-                <div className="flex items-center gap-2">
-                  <Bot className="w-3.5 h-3.5 text-primary" />
-                  <span className="text-xs font-medium text-primary">{agentName}</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-success inline-block" />
-                  <span className="text-xs text-muted-foreground">在线</span>
-                </div>
-                <button
-                  onClick={() => setOpen(false)}
-                  className="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
-                >
-                  <ChevronDown className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              {/* 消息区 */}
-              <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-                {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={cn("flex gap-2.5", msg.role === "user" ? "flex-row-reverse" : "")}
-                  >
-                    <div className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center mt-0.5">
-                      {msg.role === "assistant" ? (
-                        <div className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center">
-                          <Bot className="w-3.5 h-3.5 text-primary" />
-                        </div>
-                      ) : (
-                        <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-[10px] font-bold">
-                          我
-                        </div>
-                      )}
-                    </div>
-                    <div
-                      className={cn(
-                        "max-w-[75%] rounded-xl px-3 py-2 text-xs leading-relaxed",
-                        msg.role === "user"
-                          ? "bg-primary text-primary-foreground rounded-tr-sm"
-                          : "bg-muted text-foreground rounded-tl-sm"
-                      )}
-                    >
-                      <div className="whitespace-pre-wrap">{msg.content}</div>
-                      <div className={cn("text-[10px] mt-1", msg.role === "user" ? "text-primary-foreground/60" : "text-muted-foreground")}>
-                        {msg.time}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                <div ref={bottomRef} />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 输入栏 - 悬浮底部，无底色面板 */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-background via-background to-transparent pt-6 pb-5 px-6 lg:px-8">
+      {/* 底部输入栏 - 简洁悬浮 */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-background via-background/95 to-transparent pt-6 pb-5 px-6 lg:px-8">
         <div className="max-w-[1200px] mx-auto">
-          <div className="flex items-center gap-4 bg-card border border-border rounded-2xl px-5 py-3.5 shadow-elevated transition-shadow focus-within:shadow-glow focus-within:border-primary/40">
-            <Sparkles className="w-5 h-5 text-primary shrink-0" />
+          <div className="flex items-center gap-3 bg-white/80 backdrop-blur-xl border border-border/60 rounded-full px-4 py-2.5 shadow-sm">
+            <Sparkles className="w-4 h-4 text-primary/60 shrink-0" />
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              onFocus={() => !open && setOpen(true)}
               placeholder={placeholder || "向 AI 助手提问，或输入处理指令…"}
-              className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
+              className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 outline-none"
             />
             {input && (
               <button
                 onClick={() => setInput("")}
-                className="w-5 h-5 rounded flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                className="w-5 h-5 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -163,14 +105,11 @@ export function PageChatBar({ placeholder, agentName = "智能助手", context =
             <button
               onClick={handleSend}
               disabled={!input.trim()}
-              className="w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-30 hover:bg-primary/90 transition-all shrink-0"
+              className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-30 hover:bg-primary/90 transition-all shrink-0 shadow-sm"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-3.5 h-3.5" />
             </button>
           </div>
-          <p className="text-center text-[11px] text-muted-foreground/60 mt-2">
-            AI 助手基于内部数据提供参考，重要决策请以实际数据为准
-          </p>
         </div>
       </div>
     </>

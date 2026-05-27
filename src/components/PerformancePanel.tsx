@@ -20,7 +20,7 @@ const kpiCards = [
 ]
 
 export function PerformancePanel() {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(true)
   const [startDate, setStartDate] = useState("2026-01-01")
   const [endDate, setEndDate] = useState("2026-01-31")
   const [calculated, setCalculated] = useState(true)

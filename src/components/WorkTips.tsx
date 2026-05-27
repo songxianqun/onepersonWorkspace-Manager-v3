@@ -79,7 +79,7 @@ export function WorkTips() {
         <div className="flex items-center justify-between mb-4">
           <div className="section-title">
             <div className="badge-dot" />
-            工作提示
+            今日任务
           </div>
           <Button variant="ghost" size="sm" className="text-primary">
             查看全部

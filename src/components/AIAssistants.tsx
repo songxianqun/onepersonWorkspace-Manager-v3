@@ -1,7 +1,8 @@
 import {
-  Search,
   Users,
+  Search,
   FileText,
+  ShieldCheck,
   Headphones,
   ChevronRight,
 } from "lucide-react"
@@ -46,6 +47,18 @@ const assistants = [
     accent: "from-[hsl(38,90%,55%)] to-[hsl(45,95%,60%)]",
   },
   {
+    id: "cross-validation",
+    name: "交叉验证助手",
+    image: "/images/avatar-crosscheck.png",
+    icon: ShieldCheck,
+    title: "交叉验证",
+    desc: "对业务数据进行交叉验证和合规检查",
+    stat: "3项复核",
+    statVariant: "destructive" as const,
+    chatPrompt: "请对我当前的业务数据进行交叉验证，检查是否存在合规风险和数据不一致的问题。",
+    accent: "from-[hsl(0,65%,55%)] to-[hsl(15,60%,50%)]",
+  },
+  {
     id: "customer-service",
     name: "客户服务助手",
     image: "/images/agent-talent.png",
@@ -53,7 +66,7 @@ const assistants = [
     title: "客户服务",
     desc: "跟踪服务进度，高效做好客户日常维护",
     stat: "8条跟进",
-    statVariant: "destructive" as const,
+    statVariant: "default" as const,
     chatPrompt: "帮我梳理当前需要跟进的客户服务事项，按优先级排序，给出每项的跟进建议和话术要点。",
     accent: "from-[hsl(250,55%,55%)] to-[hsl(270,50%,60%)]",
   },
@@ -73,10 +86,15 @@ export function AIAssistants() {
         AI 团队
       </div>
 
-      {/* 2×2 grid */}
-      <div className="grid grid-cols-2 gap-4">
-        {assistants.map((item, i) => (
+      {/* 5 个助手：第一行3个，第二行2个，居中 */}
+      <div className="grid grid-cols-3 gap-4 max-w-[800px] mx-auto">
+        {assistants.slice(0, 3).map((item, i) => (
           <AssistantCard key={item.id} item={item} index={i} onClick={() => handleClick(item)} />
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-4 max-w-[540px] mx-auto mt-4">
+        {assistants.slice(3).map((item, i) => (
+          <AssistantCard key={item.id} item={item} index={i + 3} onClick={() => handleClick(item)} />
         ))}
       </div>
     </div>
