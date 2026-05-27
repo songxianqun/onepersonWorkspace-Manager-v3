@@ -144,49 +144,6 @@ function buildGeneralReply(userInput: string): string {
 👉 看看哪个条线进展最快`
 }
 
-function buildPromptHintReply(hint: string): string {
-  const quickReplies: Record<string, string> = {
-    "处理蓝海企业授信报告": `蓝海企业授信报告是今天的头号紧急项。
-
-风控退回原因：行业周期分析数据不足。建议调取最近两期行业景气度报告和可比企业数据做补充。我把相关材料准备好了。
-
-要现在开始处理吗？
-
-👉 调取行业景气度报告
-👉 开始补充分析数据
-👉 先看看其他任务`,
-
-    "复核贵州茅台定增方案": `茅台定增方案，重点关注定价合理性和配售合规性。
-
-发行底价与近期均价的偏离度需要核实，另外配售对象中的关联方需要逐一比对。建议先跑一遍合规检查。
-
-👉 跑一遍合规检查
-👉 查看定价分析详情
-👉 先处理其他复核项`,
-
-    "查看那 3 份异常合同": `3 份异常合同已按风险程度排序：
-
-**高风险（1份）：** 违约责任条款与模板偏差较大
-**中风险（1份）：** 争议解决方式有修改
-**低风险（1份）：** 保密义务范围微调
-
-建议从上往下逐份复核。
-
-👉 先看高风险那份
-👉 批量标记为已知风险`,
-
-    "留在这里快速处理": `好的，就在这里处理。你可以直接点击下方的任务卡片查看详情，也可以输入问题让我帮你操作。`,
-
-    "看看其他智能体": `可以点击顶部的智能体头像切换查看。目前投行支持中心和资管支持中心各有待办任务。`,
-
-    "查看今日任务概览": `当前共 5 项任务：1 项紧急（蓝海授信报告）、2 项待复核（茅台定增、中银路演）、1 项异常（3份合同）、1 项催办（芯原IPO）。
-
-要展开看哪一项？`,
-  }
-
-  return quickReplies[hint] || `好的，关于「${hint}」我正在整理相关信息，稍等。\n\n有更具体的方向吗？`
-}
-
 export function SupportPage() {
   const { agentClickPayload, clearAgentClick, openChat } = useChatContext()
   const [dismissed, setDismissed] = useState<Set<number>>(new Set())
@@ -247,21 +204,6 @@ export function SupportPage() {
       ])
       scrollToBottom()
     }, 400)
-  }
-
-  // 👉 快捷追问点击
-  const handlePromptHint = (hint: string) => {
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", content: hint },
-    ])
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: buildPromptHintReply(hint) },
-      ])
-      scrollToBottom()
-    }, 350)
   }
 
   // 智能体跳转
