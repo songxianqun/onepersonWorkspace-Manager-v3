@@ -1,138 +1,64 @@
-import { useState, useRef, useEffect } from "react"
-import { CheckCircle2, Bot, Send, Sparkles, X } from "lucide-react"
+import { useState, useRef } from "react"
+import { Bot, Send, Sparkles, X } from "lucide-react"
 import { useChatContext } from "@/App"
 
 interface TaskItem {
   id: number
   title: string
   desc: string
-  type: string
-  time: string
+  agent: string
 }
 
 const todayTasks: TaskItem[] = [
-  { id: 1, title: "贵州茅台定增方案待复核", desc: "投行部提交，需复核定价合理性及配售对象合规性", type: "review", time: "09:30" },
-  { id: 2, title: "合同录入异常检测（3份）", desc: "系统自动识别出3份合同关键条款与模板存在偏差", type: "exception", time: "10:15" },
-  { id: 3, title: "芯原半导体IPO材料补录催办", desc: "财务流水凭证及核心供应商访谈记录待补充", type: "todo", time: "11:00" },
-  { id: 4, title: "蓝海企业授信报告风控退回", desc: "需补充目标企业所在行业最新周期分析数据", type: "urgent", time: "14:00" },
-  { id: 5, title: "中银金租新能源研究服务路演安排", desc: "需协调研究所新能源领域研究员准备路演材料", type: "review", time: "15:30" },
+  { id: 1, title: "恒瑞医药再融资方案复核", desc: "核对募集资金用途与招股书一致性", agent: "投行业务助理" },
+  { id: 2, title: "某芯片企业IPO辅导进展", desc: "整理辅导期问题整改清单", agent: "投行业务助理" },
+  { id: 3, title: "债券型产品风险评级更新", desc: "根据最新底层资产调整风险等级", agent: "资管业务助理" },
+  { id: 4, title: "半导体行业周报", desc: "汇总本周行业政策变化及龙头公司公告", agent: "投资支持中心" },
+  { id: 5, title: "高净值客户资产配置方案", desc: "根据最新市场研判调整股债配比建议", agent: "零售支持中心" },
 ]
 
-const typeLabels: Record<string, string> = {
-  review: "待复核",
-  exception: "异常",
-  todo: "待办",
-  urgent: "紧急",
-}
-
-const typeColors: Record<string, string> = {
-  review: "#C9A96E",
-  exception: "#EF4444",
-  todo: "#3B82F6",
-  urgent: "#EF4444",
+interface AgentInfo {
+  name: string
+  tag?: string
+  avatarType?: "bot" | "task" | "default"
 }
 
 interface Message {
   role: "user" | "assistant"
   content: string
   agentName?: string
+  agentInfo?: AgentInfo
+  animate?: boolean
+}
+
+const TASK_BOT_INFO: AgentInfo = {
+  name: "今日任务",
+  tag: "智能机器人",
+  avatarType: "task",
 }
 
 // ── AI 人设回复生成器 ──
 
 function buildDefaultGreeting(): string {
-  return `早上好。
-
-今天共 **5 项** 任务需要关注，其中 **1 项标注为紧急**。建议上午先把最紧迫的解决掉，下午节奏会从容很多。
-
-**需要紧急救火**
-蓝海企业授信报告被风控退回了，下午前要补上行业周期分析数据。优先级最高，建议第一个处理。
-
-**需要复核把关**
-茅台定增方案和中银金租路演材料都涉及对外输出质量，需要你今天过一遍确认。
-
-**系统异常排查**
-有 3 份合同的关键条款被系统标记出与模板存在偏差，可能需要你人工判断一下。
-
-**日常催办**
-芯原半导体 IPO 材料补录还在等财务流水和访谈记录，适时催一下进度就好。
-
-👉 处理蓝海企业授信报告
-👉 复核贵州茅台定增方案
-👉 查看那 3 份异常合同`
-}
-
-function buildTaskReply(task: TaskItem): string {
-  const replies: Record<number, string> = {
-    1: `好的，帮你梳理茅台定增方案。
-
-核心关注两点：一是发行底价与近期均价的偏离度需控制在 20% 以内，二是配售对象名单要逐项核查关联方回避情况。
-
-方案材料我这边都有，需要我逐一比对条款吗？
-
-👉 检查定价偏离度
-👉 核查配售对象名单
-👉 生成复核报告初稿`,
-
-    2: `这 3 份异常合同我调出来了。
-
-系统标记的偏差主要集中在：违约责任条款、争议解决方式和保密义务范围。其中 1 份偏差较大，建议优先复核。
-
-需要我按风险程度排序后逐一推送给你吗？
-
-👉 先看偏差最大的那份
-👉 批量标记为已知风险
-👉 查看条款对比详情`,
-
-    3: `芯原半导体这边，IPO 补录还差两块硬骨头。
-
-财务流水凭证需要对方财务总监签字确认，供应商访谈记录那边也需要再跟进一次。已经在系统里发了催办提醒。
-
-想让我再发一封正式催办函吗？
-
-👉 发送正式催办函
-👉 查看补录进度详情
-👉 标记为本周跟踪`,
-
-    4: `蓝海企业这个确实急。风控退回的核心原因是行业周期分析数据不足，最近行业报告我帮你扫描了一下，有几份最新的可以参考。
-
-建议先补充数据再重新提交，避免反复打回。
-
-👉 查看最新行业报告
-👉 补充数据后重新提交
-👉 联系风控沟通细节`,
-
-    5: `中银金租的路演安排已经在协调了。
-
-新能源领域的对口研究员有 3 位可选，其中刘博下周在上海正好有时间，建议优先安排。路演大纲我让助理先拟一版？
-
-👉 确认刘博时间并排期
-👉 查看路演大纲模板
-👉 了解中银金租背景资料`,
-  }
-  return replies[task.id] || `收到，正在为您处理「${task.title}」。\n\n${task.desc}\n\n需要我帮您做什么？`
-}
-
-function buildAgentReply(name: string, hasBadge: boolean, agentTasks: TaskItem[]): string {
-  if (!hasBadge) {
-    return `这个时段「${name}」这边没有待办任务，整体情况平稳。
-
-需要我帮你看看其他方向，还是进去逛逛？
-
-👉 看看其他智能体
-👉 进入${name}`
+  const groups: Record<string, TaskItem[]> = {}
+  for (const task of todayTasks) {
+    if (!groups[task.agent]) groups[task.agent] = []
+    groups[task.agent].push(task)
   }
 
-  const taskLines = agentTasks.map((t) => `• **${t.title}** — ${t.desc.slice(0, 30)}…`).join("\n")
+  let result = `您好！我是**今日任务**助手。以下是有待办事项的业务助理任务汇总：\n\n`
 
-  return `「${name}」这边整理了 **${agentTasks.length} 项**待跟进：
+  for (const [agent, tasks] of Object.entries(groups)) {
+    result += `**${agent}**（${tasks.length}项待办）\n`
+    tasks.forEach((task, idx) => {
+      result += `${idx + 1}. ${task.title}：${task.desc}\n`
+    })
+    result += `\n`
+  }
 
-${taskLines}
+  result += `您可在下方对话框输入具体待办内容进行处理，也可围绕任务摘要继续追问。`
 
-在这里快速处理，还是进入${name}深度办理？
-
-👉 留在这里快速处理
-👉 进入${name}`
+  return result
 }
 
 function buildGeneralReply(userInput: string): string {
@@ -144,66 +70,80 @@ function buildGeneralReply(userInput: string): string {
 👉 看看哪个条线进展最快`
 }
 
+// ── 今日任务机器人头像 ──
+function RobotAvatarSVG({ className = "" }: { className?: string }) {
+  return (
+    <img
+      src="/images/robot-task-avatar.jpg"
+      alt="今日任务机器人"
+      className={`rounded-full shrink-0 object-cover ${className}`}
+    />
+  )
+}
+
+// ── 渲染助手头像 ──
+function AgentAvatar({ agentInfo, className = "" }: { agentInfo?: AgentInfo; className?: string }) {
+  if (agentInfo?.avatarType === "task") {
+    return <RobotAvatarSVG className={className} />
+  }
+  return (
+    <div className={`rounded-full bg-primary/10 flex items-center justify-center shrink-0 ${className}`}>
+      <Bot className="w-3.5 h-3.5 text-primary" />
+    </div>
+  )
+}
+
+// ── 渲染助手名称标签 ──
+function AgentNameTag({ agentInfo }: { agentInfo?: AgentInfo }) {
+  if (!agentInfo) return null
+  return (
+    <div className="flex items-center gap-1.5 mb-1.5">
+      <span className="text-xs font-semibold text-zinc-700">{agentInfo.name}</span>
+      {agentInfo.tag && (
+        <span
+          className="text-[10px] px-1.5 py-0.5 rounded-full text-white font-medium"
+          style={{ backgroundColor: "#C9A96E" }}
+        >
+          {agentInfo.tag}
+        </span>
+      )}
+    </div>
+  )
+}
+
 export function SupportPage() {
-  const { agentClickPayload, clearAgentClick, openChat } = useChatContext()
-  const [dismissed, setDismissed] = useState<Set<number>>(new Set())
+  const { openChat } = useChatContext()
   const [input, setInput] = useState("")
   const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: buildDefaultGreeting() },
+    { role: "assistant", content: buildDefaultGreeting(), agentInfo: TASK_BOT_INFO },
   ])
   const bottomRef = useRef<HTMLDivElement>(null)
-  const visibleTasks = todayTasks.filter((t) => !dismissed.has(t.id))
 
   const scrollToBottom = () => {
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100)
-  }
-
-  // 监听智能体头像点击
-  useEffect(() => {
-    if (!agentClickPayload || agentClickPayload.tab !== "support") return
-
-    const { name, hasBadge } = agentClickPayload
-    clearAgentClick()
-
-    const agentTasks = hasBadge
-      ? visibleTasks.filter((_, idx) => (name === "投行支持中心" ? idx < 2 : idx >= 2 && idx < 5))
-      : []
-
-    const reply = buildAgentReply(name, hasBadge, agentTasks)
-    setMessages((prev) => [...prev, { role: "assistant", content: reply, agentName: name }])
-    scrollToBottom()
-  }, [agentClickPayload, clearAgentClick, visibleTasks])
-
-  const handleTaskClick = (task: TaskItem) => {
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", content: task.title },
-    ])
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: buildTaskReply(task) },
-      ])
-      scrollToBottom()
-    }, 350)
-  }
-
-  const handleDismissTask = (taskId: number) => {
-    setDismissed((prev) => new Set([...prev, taskId]))
   }
 
   const handleSend = () => {
     if (!input.trim()) return
     const text = input.trim()
     setInput("")
-    setMessages((prev) => [...prev, { role: "user", content: text }])
+    setMessages((prev) => [...prev, { role: "user", content: text, animate: true }])
     setTimeout(() => {
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: buildGeneralReply(text) },
+        { role: "assistant", content: buildGeneralReply(text), animate: true },
       ])
       scrollToBottom()
     }, 400)
+  }
+
+  // 重新发送今日任务消息
+  const handleResendTaskSummary = () => {
+    setMessages((prev) => [
+      ...prev,
+      { role: "assistant", content: buildDefaultGreeting(), agentInfo: TASK_BOT_INFO, animate: true },
+    ])
+    scrollToBottom()
   }
 
   // 智能体跳转
@@ -281,6 +221,7 @@ export function SupportPage() {
                   setMessages((prev) => [...prev, {
                     role: "assistant",
                     content: "好的，继续在当前页面。可以直接点击任务卡片或输入问题。",
+                    animate: true,
                   }])
                   scrollToBottom()
                 }}
@@ -295,6 +236,7 @@ export function SupportPage() {
                   setMessages((prev) => [...prev, {
                     role: "assistant",
                     content: "好的，就在这里处理。你可以直接点击下方的任务卡片查看详情，也可以输入问题让我帮你操作。",
+                    animate: true,
                   }])
                   scrollToBottom()
                 }}
@@ -320,92 +262,75 @@ export function SupportPage() {
     )
   }
 
+  // 是否显示顶部今日任务入口（当有除默认消息外的其他消息时）
+  const showTaskBotEntry = messages.length > 1
+
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex-1 overflow-y-auto min-h-0 pt-6 px-0">
-        <div className="flex flex-col bg-white ring-1 ring-zinc-100/60 rounded-2xl overflow-hidden min-h-full">
-          {/* 对话消息区 */}
-          <div className="flex-1 overflow-y-auto bg-white px-5 pt-6 pb-2">
+    <div className="h-full flex flex-col pt-6 px-0">
+      <div className="flex-1 flex flex-col bg-white ring-1 ring-zinc-100/60 rounded-2xl overflow-hidden min-h-0">
+        {/* 对话消息区 - 唯一滚动区域 */}
+        <div className="flex-1 overflow-y-auto bg-white px-5 pt-6 pb-2 relative min-h-0">
+            {/* 顶部固定今日任务入口 */}
+            {showTaskBotEntry && (
+              <div className="sticky top-0 z-10 mb-4 animate-slide-down">
+                <button
+                  onClick={handleResendTaskSummary}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 transition-all duration-300 hover:shadow-md group"
+                >
+                  <RobotAvatarSVG className="w-8 h-8" />
+                  <div className="flex-1 text-left">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-zinc-800">今日任务</span>
+                      <span
+                        className="text-[10px] px-1.5 py-0.5 rounded-full text-white font-medium"
+                        style={{ backgroundColor: "#C9A96E" }}
+                      >
+                        智能机器人
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-500 mt-0.5">点击查看今日 5 项待办任务摘要</p>
+                  </div>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center bg-white/80 text-amber-600 group-hover:bg-white group-hover:scale-110 transition-all">
+                    <Sparkles className="w-3.5 h-3.5" />
+                  </div>
+                </button>
+              </div>
+            )}
+
             {/* 消息列表 */}
             {messages.map((msg, i) => (
-              <div key={i} className={`flex gap-2.5 mb-4 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
+              <div
+                key={i}
+                className={`flex gap-2.5 mb-4 ${msg.role === "user" ? "flex-row-reverse" : ""} ${msg.animate ? "animate-fade-in-up" : ""}`}
+              >
                 {msg.role === "assistant" ? (
-                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                    <Bot className="w-3.5 h-3.5 text-primary" />
-                  </div>
+                  <AgentAvatar agentInfo={msg.agentInfo} className="w-7 h-7" />
                 ) : (
                   <div className="w-7 h-7 rounded-full bg-primary/80 flex items-center justify-center text-white text-[10px] font-medium shrink-0">我</div>
                 )}
-                <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                  msg.role === "user"
-                    ? "bg-primary/85 text-white rounded-br-sm"
-                    : "bg-zinc-100 text-zinc-800 rounded-tl-sm"
-                }`}>
-                  {msg.role === "user" ? (
-                    <span>{msg.content}</span>
-                  ) : (
-                    renderMessageContent(msg)
-                  )}
-                </div>
+                {msg.role === "assistant" && msg.agentInfo ? (
+                  <div className="flex-1 min-w-0">
+                    <AgentNameTag agentInfo={msg.agentInfo} />
+                    <div className="max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed bg-zinc-100 text-zinc-800 rounded-tl-sm">
+                      {renderMessageContent(msg)}
+                    </div>
+                  </div>
+                ) : (
+                  <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                    msg.role === "user"
+                      ? "bg-primary/85 text-white rounded-br-sm"
+                      : "bg-zinc-100 text-zinc-800 rounded-tl-sm"
+                  }`}>
+                    {msg.role === "user" ? (
+                      <span>{msg.content}</span>
+                    ) : (
+                      renderMessageContent(msg)
+                    )}
+                  </div>
+                )}
               </div>
             ))}
 
-            {/* 任务列表（参考员工端样式） */}
-            {visibleTasks.length > 0 ? (
-              <div className="space-y-2 pl-11 mb-4">
-                {visibleTasks.map((task, idx) => (
-                  <button
-                    key={task.id}
-                    onClick={() => handleTaskClick(task)}
-                    className="w-full text-left group"
-                  >
-                    <div
-                      className="flex gap-2.5 items-start p-3 rounded-lg transition-all hover:shadow-md"
-                      style={{
-                        background: "linear-gradient(135deg, #FFF9F0 0%, #FFF5E6 100%)",
-                        borderLeft: `3px solid ${typeColors[task.type]}`,
-                      }}
-                    >
-                      <span
-                        className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-white text-[11px] font-semibold mt-0.5"
-                        style={{ background: "linear-gradient(135deg, #C9A96E 0%, #E8D4A8 50%, #C9A96E 100%)" }}
-                      >
-                        {idx + 1}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="text-sm font-medium text-zinc-800">{task.title}</span>
-                          <span
-                            className="text-[10px] px-1.5 py-0.5 rounded-full text-white font-medium"
-                            style={{ backgroundColor: typeColors[task.type] }}
-                          >
-                            {typeLabels[task.type]}
-                          </span>
-                        </div>
-                        <p className="text-xs text-zinc-500 leading-relaxed">{task.desc}</p>
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
-                        <span className="text-[10px] text-zinc-400">{task.time}</span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDismissTask(task.id)
-                          }}
-                          className="w-6 h-6 rounded-full flex items-center justify-center text-zinc-300 hover:text-green-500 hover:bg-green-50 transition-all opacity-0 group-hover:opacity-100"
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="pl-11 text-center py-12">
-                <CheckCircle2 className="w-10 h-10 text-zinc-300 mx-auto mb-3" />
-                <p className="text-sm text-zinc-400">今日任务已全部处理完毕</p>
-              </div>
-            )}
             <div ref={bottomRef} />
           </div>
 
@@ -436,7 +361,6 @@ export function SupportPage() {
             </div>
           </div>
         </div>
-      </div>
     </div>
   )
 }

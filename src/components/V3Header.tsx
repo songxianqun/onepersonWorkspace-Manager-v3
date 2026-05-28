@@ -82,8 +82,8 @@ export function V3Header({ activeTab, onTabChange }: Props) {
     if (activeTab === "employee") {
       // 员工端保持原有行为
       openChat({ name, image })
-    } else {
-      // 业务支持端 / 协同端：触发智能体点击事件
+    } else if (activeTab === "collab") {
+      // 协同端：触发智能体点击事件
       triggerAgentClick({ name, image, hasBadge, badgeCount, tab: activeTab })
     }
   }

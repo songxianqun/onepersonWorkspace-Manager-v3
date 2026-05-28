@@ -1,34 +1,80 @@
 import { useState, useRef, useEffect } from "react"
-import { Bot, Send, Sparkles, X } from "lucide-react"
+import {
+  ArrowRight,
+  BarChart3,
+  Bot,
+  FileQuestion,
+  RadioTower,
+  Send,
+  ShieldAlert,
+  Sparkles,
+  UsersRound,
+  X,
+  type LucideIcon,
+} from "lucide-react"
 import { useChatContext } from "@/App"
+
+type PromptCard = {
+  title: string
+  prompt: string
+  desc: string
+  meta: string
+  icon: LucideIcon
+  tone: string
+}
+
+const promptCards: PromptCard[] = [
+  {
+    title: "请示事项",
+    prompt: "请汇总本周需要我拍板的请示事项，按紧急程度、影响范围和建议处理顺序列出。",
+    desc: "待决策事项、跨部门分歧、审批建议一次看清。",
+    meta: "3 项待拍板",
+    icon: FileQuestion,
+    tone: "from-amber-500/15 to-orange-500/5 text-amber-700 border-amber-200/70",
+  },
+  {
+    title: "经营看板",
+    prompt: "请生成今日经营看板，重点说明各业务条线进度、目标达成率和需要管理层关注的偏差。",
+    desc: "经营指标、条线进展、目标偏差自动汇总。",
+    meta: "4 条线更新",
+    icon: BarChart3,
+    tone: "from-emerald-500/15 to-teal-500/5 text-emerald-700 border-emerald-200/70",
+  },
+  {
+    title: "风险提示",
+    prompt: "请梳理当前需要管理层关注的重大风险，区分市场、信用、合规和运营风险，并给出优先处置建议。",
+    desc: "风险分级、影响判断、处置优先级快速生成。",
+    meta: "3 个风险点",
+    icon: ShieldAlert,
+    tone: "from-rose-500/15 to-red-500/5 text-rose-700 border-rose-200/70",
+  },
+  {
+    title: "队伍状况",
+    prompt: "请分析当前队伍状况，包括关键岗位在岗、缺编、绩效波动和近期需要关注的人员稳定性问题。",
+    desc: "编制、绩效、稳定性与关键岗位状态联动查看。",
+    meta: "7 个缺编",
+    icon: UsersRound,
+    tone: "from-sky-500/15 to-cyan-500/5 text-sky-700 border-sky-200/70",
+  },
+  {
+    title: "应急组织",
+    prompt: "请汇总近期应急组织运行情况，包括应急事件、响应时效、复盘进展和需要补强的预案。",
+    desc: "应急事件、响应时效、复盘和预案缺口集中呈现。",
+    meta: "1 项跟踪中",
+    icon: RadioTower,
+    tone: "from-violet-500/15 to-fuchsia-500/5 text-violet-700 border-violet-200/70",
+  },
+]
 
 // 👉 标签到 prompt 文本的映射
 const hintToPrompt: Record<string, string> = {
-  "请示事项": "本周待决策事项有哪些",
-  "经营看板": "各条线经营进度如何",
-  "风险提示": "当前需关注哪些风险",
-  "队伍状况": "团队人员配置情况",
-  "应急组织": "近期应急响应进展",
+  ...Object.fromEntries(promptCards.map((card) => [card.title, card.prompt])),
 }
 
 // ── AI 人设回复生成器 ──
 
-function buildDefaultGreeting(): string {
-  return `下午好。
-
-协同管理助手已就位。今天跨部门的事项比较多，帮你梳理了几个关键维度：
-
-👉 请示事项
-👉 经营看板
-👉 风险提示
-👉 队伍状况
-👉 应急组织
-
-也可以直接输入你想了解的问题，我会用尽量简洁的方式呈现。`
-}
-
 const promptReplies: Record<string, string> = {
-  "本周待决策事项有哪些":
+  [promptCards[0].prompt]:
     `本周有 **3 项** 需要你拍板：
 
 • **跨部门资源协调方案** — 各部门意见已汇总，分歧主要在预算分摊比例
@@ -41,7 +87,7 @@ const promptReplies: Record<string, string> = {
 👉 审批季度目标调整
 👉 逐一过一遍`,
 
-  "各条线经营进度如何":
+  [promptCards[1].prompt]:
     `各条线数据过了一遍，整体向稳：
 
 • **投行** — 项目储备充裕，过会率保持 85%，节奏稳健
@@ -55,7 +101,7 @@ const promptReplies: Record<string, string> = {
 👉 查看各条线详细数据
 👉 生成经营简报`,
 
-  "当前需关注哪些风险":
+  [promptCards[2].prompt]:
     `当前有 **3 个风险点** 需要你心里有数：
 
 • 债市最近波动加大，持仓久期可能要适当缩短
@@ -68,7 +114,7 @@ const promptReplies: Record<string, string> = {
 👉 复核下调评级客户
 👉 了解流程修复进展`,
 
-  "团队人员配置情况":
+  [promptCards[3].prompt]:
     `团队这边整体稳定：
 
 • **128 人编制**，在岗 121，缺 7 个编制
@@ -81,7 +127,7 @@ const promptReplies: Record<string, string> = {
 👉 安排新员工培训事项
 👉 看看各团队饱和度`,
 
-  "近期应急响应进展":
+  [promptCards[4].prompt]:
     `近期应急响应都稳住了：
 
 • 系统故障已修复，影响控制在 15 分钟，复盘报告在写
@@ -214,9 +260,7 @@ export function CollabPage() {
   const { agentClickPayload, clearAgentClick, openChat } = useChatContext()
   const [input, setInput] = useState("")
   const bottomRef = useRef<HTMLDivElement>(null)
-  const [messages, setMessages] = useState<{ role: "user" | "assistant"; content: string; agentName?: string }[]>([
-    { role: "assistant", content: buildDefaultGreeting() },
-  ])
+  const [messages, setMessages] = useState<{ role: "user" | "assistant"; content: string; agentName?: string }[]>([])
 
   const scrollToBottom = () => {
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100)
@@ -266,15 +310,19 @@ export function CollabPage() {
     scrollToBottom()
   }
 
+  const startPromptConversation = (prompt: string) => {
+    setMessages((prev) => [...prev,
+      { role: "user", content: prompt },
+      { role: "assistant", content: promptReplies[prompt] || buildGeneralReply(prompt) },
+    ])
+    scrollToBottom()
+  }
+
   // 👉 快捷追问点击：先检查是否为提示词入口，再查快捷回复
   const handlePromptHint = (hint: string) => {
     const mappedPrompt = hintToPrompt[hint]
     if (mappedPrompt) {
-      setMessages((prev) => [...prev,
-        { role: "user", content: mappedPrompt },
-        { role: "assistant", content: promptReplies[mappedPrompt] || `正在查询「${hint}」，请稍候…` },
-      ])
-      scrollToBottom()
+      startPromptConversation(mappedPrompt)
       return
     }
 
@@ -290,6 +338,53 @@ export function CollabPage() {
       scrollToBottom()
     }, 350)
   }
+
+  const renderPromptBoard = () => (
+    <div className="min-h-[430px] flex flex-col justify-center py-4">
+      <div className="max-w-3xl mx-auto text-center mb-6">
+        <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary mb-4">
+          <Sparkles className="w-3.5 h-3.5" />
+          协同管理助手
+        </div>
+        <h2 className="text-2xl font-semibold text-zinc-900 tracking-normal">
+          请选择一个协同主题开始对话
+        </h2>
+        <p className="mt-2 text-sm text-zinc-500">
+          我会基于请示、经营、风险、队伍和应急五个管理维度，先给出结论，再补充可追问方向。
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+        {promptCards.map((card) => {
+          const Icon = card.icon
+          return (
+            <button
+              key={card.title}
+              onClick={() => startPromptConversation(card.prompt)}
+              className={`group min-h-[172px] rounded-2xl border bg-gradient-to-br ${card.tone} p-4 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-zinc-200/70 focus:outline-none focus:ring-2 focus:ring-primary/30`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/75 shadow-sm flex items-center justify-center">
+                  <Icon className="w-5 h-5" />
+                </div>
+                <span className="rounded-full bg-white/65 px-2 py-1 text-[11px] font-medium text-zinc-600">
+                  {card.meta}
+                </span>
+              </div>
+              <div className="mt-4">
+                <h3 className="text-base font-semibold text-zinc-900">{card.title}</h3>
+                <p className="mt-2 text-xs leading-5 text-zinc-600">{card.desc}</p>
+              </div>
+              <div className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-zinc-700">
+                开始对话
+                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+              </div>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
 
   // 渲染消息内容，支持 👉 快捷追问标签和 【】 操作按钮
   const renderMessageContent = (msg: { role: string; content: string; agentName?: string }) => {
@@ -401,31 +496,48 @@ export function CollabPage() {
       <div className="flex-1 overflow-y-auto min-h-0 pt-6 px-0">
         <div className="flex flex-col bg-white ring-1 ring-zinc-100/60 rounded-2xl overflow-hidden min-h-full">
           <div className="flex-1 overflow-y-auto bg-white px-5 pt-6 pb-2">
-            {/* 消息列表 */}
-            {messages.map((msg, i) => (
-              <div key={i} className={`flex gap-2.5 mb-4 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
-                <div className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center mt-0.5">
-                  {msg.role === "assistant" ? (
-                    <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Bot className="w-3.5 h-3.5 text-primary" />
+            {messages.length === 0 ? (
+              renderPromptBoard()
+            ) : (
+              <>
+                <div className="mb-4 grid grid-cols-2 md:grid-cols-5 gap-2">
+                  {promptCards.map((card) => (
+                    <button
+                      key={card.title}
+                      onClick={() => startPromptConversation(card.prompt)}
+                      className="rounded-xl border border-zinc-100 bg-zinc-50 px-3 py-2 text-xs font-medium text-zinc-600 hover:border-primary/25 hover:bg-primary/5 hover:text-primary transition-colors"
+                    >
+                      {card.title}
+                    </button>
+                  ))}
+                </div>
+                {/* 消息列表 */}
+                {messages.map((msg, i) => (
+                  <div key={i} className={`flex gap-2.5 mb-4 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
+                    <div className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center mt-0.5">
+                      {msg.role === "assistant" ? (
+                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Bot className="w-3.5 h-3.5 text-primary" />
+                        </div>
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-primary/80 flex items-center justify-center text-white text-[10px] font-medium">我</div>
+                      )}
                     </div>
-                  ) : (
-                    <div className="w-6 h-6 rounded-full bg-primary/80 flex items-center justify-center text-white text-[10px] font-medium">我</div>
-                  )}
-                </div>
-                <div className={`max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
-                  msg.role === "user"
-                    ? "bg-primary/85 text-white rounded-br-sm"
-                    : "bg-zinc-100 text-zinc-800 rounded-tl-sm"
-                }`}>
-                  {msg.role === "user" ? (
-                    <span>{msg.content}</span>
-                  ) : (
-                    renderMessageContent(msg)
-                  )}
-                </div>
-              </div>
-            ))}
+                    <div className={`max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
+                      msg.role === "user"
+                        ? "bg-primary/85 text-white rounded-br-sm"
+                        : "bg-zinc-100 text-zinc-800 rounded-tl-sm"
+                    }`}>
+                      {msg.role === "user" ? (
+                        <span>{msg.content}</span>
+                      ) : (
+                        renderMessageContent(msg)
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
 
             <div ref={bottomRef} />
           </div>
