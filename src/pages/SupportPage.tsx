@@ -1,12 +1,17 @@
-import { useState, useRef } from "react"
-import { Bot, Send, Sparkles, X } from "lucide-react"
-import { useChatContext } from "@/App"
+import { useRef, useState } from "react"
+import { ChevronDown, Mic, Paperclip, Send } from "lucide-react"
 
 interface TaskItem {
   id: number
   title: string
   desc: string
   agent: string
+}
+
+interface Message {
+  role: "user" | "assistant"
+  content: string
+  animate?: boolean
 }
 
 const todayTasks: TaskItem[] = [
@@ -17,48 +22,13 @@ const todayTasks: TaskItem[] = [
   { id: 5, title: "高净值客户资产配置方案", desc: "根据最新市场研判调整股债配比建议", agent: "零售支持中心" },
 ]
 
-interface AgentInfo {
-  name: string
-  tag?: string
-  avatarType?: "bot" | "task" | "default"
-}
-
-interface Message {
-  role: "user" | "assistant"
-  content: string
-  agentName?: string
-  agentInfo?: AgentInfo
-  animate?: boolean
-}
-
-const TASK_BOT_INFO: AgentInfo = {
-  name: "今日任务",
-  tag: "智能机器人",
-  avatarType: "task",
-}
-
-// ── AI 人设回复生成器 ──
-
-function buildDefaultGreeting(): string {
+function groupTasksByAgent() {
   const groups: Record<string, TaskItem[]> = {}
   for (const task of todayTasks) {
     if (!groups[task.agent]) groups[task.agent] = []
     groups[task.agent].push(task)
   }
-
-  let result = `您好！我是**今日任务**助手。以下是有待办事项的业务助理任务汇总：\n\n`
-
-  for (const [agent, tasks] of Object.entries(groups)) {
-    result += `**${agent}**（${tasks.length}项待办）\n`
-    tasks.forEach((task, idx) => {
-      result += `${idx + 1}. ${task.title}：${task.desc}\n`
-    })
-    result += `\n`
-  }
-
-  result += `您可在下方对话框输入具体待办内容进行处理，也可围绕任务摘要继续追问。`
-
-  return result
+  return groups
 }
 
 function buildGeneralReply(userInput: string): string {
@@ -70,8 +40,16 @@ function buildGeneralReply(userInput: string): string {
 👉 看看哪个条线进展最快`
 }
 
-// ── 今日任务机器人头像 ──
-function RobotAvatarSVG({ className = "" }: { className?: string }) {
+function buildTaskDetailReply(task: TaskItem): string {
+  return `正在查看「${task.title}」的进一步信息。
+
+业务归属：${task.agent}
+待办事项：${task.desc}
+
+建议先核对任务背景、责任人、资料缺口和下一步动作。如需继续处理，可以直接输入“生成处理方案”或“列出所需材料”。`
+}
+
+function RobotAvatar({ className = "" }: { className?: string }) {
   return (
     <img
       src="/images/robot-task-avatar.jpg"
@@ -81,41 +59,93 @@ function RobotAvatarSVG({ className = "" }: { className?: string }) {
   )
 }
 
-// ── 渲染助手头像 ──
-function AgentAvatar({ agentInfo, className = "" }: { agentInfo?: AgentInfo; className?: string }) {
-  if (agentInfo?.avatarType === "task") {
-    return <RobotAvatarSVG className={className} />
-  }
-  return (
-    <div className={`rounded-full bg-primary/10 flex items-center justify-center shrink-0 ${className}`}>
-      <Bot className="w-3.5 h-3.5 text-primary" />
-    </div>
-  )
+function renderText(text: string) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g)
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={i} className="font-semibold text-zinc-900">{part.slice(2, -2)}</strong>
+    }
+    return part
+  })
 }
 
-// ── 渲染助手名称标签 ──
-function AgentNameTag({ agentInfo }: { agentInfo?: AgentInfo }) {
-  if (!agentInfo) return null
+function TaskDock({
+  isOpen,
+  onToggle,
+  onSelectTask,
+}: {
+  isOpen: boolean
+  onToggle: () => void
+  onSelectTask: (task: TaskItem) => void
+}) {
+  const groups = groupTasksByAgent()
+
   return (
-    <div className="flex items-center gap-1.5 mb-1.5">
-      <span className="text-xs font-semibold text-zinc-700">{agentInfo.name}</span>
-      {agentInfo.tag && (
-        <span
-          className="text-[10px] px-1.5 py-0.5 rounded-full text-white font-medium"
-          style={{ backgroundColor: "#C9A96E" }}
-        >
-          {agentInfo.tag}
+    <div className="shrink-0 bg-white px-5 pb-3 pt-4">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center gap-3 rounded-xl border border-amber-100 bg-amber-50/55 px-4 py-3 text-left transition-all hover:border-amber-200 hover:bg-amber-50"
+      >
+        <RobotAvatar className="h-8 w-8" />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-zinc-800">今日任务</span>
+            <span className="rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 ring-1 ring-amber-100">
+              智能机器人
+            </span>
+          </div>
+          <p className="mt-0.5 text-xs text-zinc-500">
+            点击{isOpen ? "收起" : "查看"}今日 {todayTasks.length} 项待办任务摘要
+          </p>
+        </div>
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-amber-600">
+          <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
         </span>
+      </button>
+
+      {isOpen && (
+        <div className="mt-2 max-h-[260px] overflow-y-auto rounded-xl border border-zinc-100 bg-white px-4 py-3 shadow-[0_10px_24px_rgba(15,23,42,0.06)]">
+          <div className="space-y-3">
+            {Object.entries(groups).map(([agent, tasks]) => (
+              <section key={agent}>
+                <h3 className="mb-1.5 text-xs font-semibold text-zinc-500">
+                  {agent} <span className="font-normal text-zinc-600">（{tasks.length}项待办）</span>
+                </h3>
+                <div className="divide-y divide-zinc-100">
+                  {tasks.map((task, index) => (
+                    <button
+                      key={task.id}
+                      type="button"
+                      onClick={() => onSelectTask(task)}
+                      className="group flex w-full items-center gap-2 py-2 text-left"
+                    >
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-50 text-xs font-semibold text-amber-700">
+                        {index + 1}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium text-zinc-900 group-hover:text-amber-700">
+                          {task.title}
+                        </span>
+                        <span className="mt-0.5 block truncate text-xs text-zinc-500">{task.desc}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   )
 }
 
 export function SupportPage() {
-  const { openChat } = useChatContext()
   const [input, setInput] = useState("")
+  const [isTaskDockOpen, setIsTaskDockOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: buildDefaultGreeting(), agentInfo: TASK_BOT_INFO },
+    { role: "assistant", content: "您好！我是今日任务助手。可点击上方今日任务查看待办摘要，也可以直接在下方输入问题。" },
   ])
   const bottomRef = useRef<HTMLDivElement>(null)
 
@@ -137,230 +167,99 @@ export function SupportPage() {
     }, 400)
   }
 
-  // 重新发送今日任务消息
-  const handleResendTaskSummary = () => {
+  const handleTaskClick = (task: TaskItem) => {
+    const text = `${task.title}：${task.desc}`
+    setIsTaskDockOpen(false)
     setMessages((prev) => [
       ...prev,
-      { role: "assistant", content: buildDefaultGreeting(), agentInfo: TASK_BOT_INFO, animate: true },
+      { role: "user", content: text, animate: true },
+      { role: "assistant", content: buildTaskDetailReply(task), animate: true },
     ])
     scrollToBottom()
   }
 
-  // 智能体跳转
-  const handleJumpToAgent = (agentName: string) => {
-    const agentImages = [
-      "/aiworkspace/images/Avatar1.png",
-      "/aiworkspace/images/Avatar2.png",
-      "/aiworkspace/images/Avatar3.png",
-      "/aiworkspace/images/Avatar4.png",
-      "/aiworkspace/images/Avatar5.png",
-      "/aiworkspace/images/Avatar6.png",
-      "/aiworkspace/images/Avatar7.png",
-    ]
-    const supportNames = [
-      "投行支持中心", "资管支持中心", "零售支持中心",
-      "投资支持中心", "销交支持中心", "机构支持中心", "交叉验证中心",
-    ]
-    const idx = supportNames.indexOf(agentName)
-    if (idx >= 0) {
-      openChat({ name: agentName, image: agentImages[idx] })
-    }
-  }
-
-  // 渲染消息内容，支持 👉 快捷追问标签和 【】 操作按钮
-  const renderMessageContent = (msg: Message) => {
-    const lines = msg.content.split("\n")
-    const textParts: string[] = []
-    const hints: string[] = []
-    let hasLegacyActions = false
-
-    for (const line of lines) {
-      const trimmed = line.trim()
-      if (trimmed.startsWith("👉")) {
-        hints.push(trimmed.replace(/^👉\s*/, ""))
-      } else if (trimmed.startsWith("【")) {
-        hasLegacyActions = true
-        textParts.push(line)
-      } else {
-        textParts.push(line)
-      }
-    }
-
-    // 处理粗体 **text**
-    const renderText = (text: string) => {
-      const parts = text.split(/(\*\*[^*]+\*\*)/g)
-      return parts.map((part, i) => {
-        if (part.startsWith("**") && part.endsWith("**")) {
-          return <strong key={i} className="font-semibold text-zinc-900">{part.slice(2, -2)}</strong>
-        }
-        return part
-      })
-    }
-
-    return (
-      <>
-        <div className="whitespace-pre-wrap">{renderText(textParts.join("\n"))}</div>
-
-        {/* 【】兼容旧版操作按钮 */}
-        {hasLegacyActions && msg.role === "assistant" && (
-          <div className="flex gap-2 mt-3">
-            {msg.content.includes("【跳转") && (
-              <button
-                onClick={() => {
-                  const match = msg.content.match(/【跳转至([^】]+)】/)
-                  handleJumpToAgent(match ? match[1] : msg.agentName || "")
-                }}
-                className="px-3 py-1.5 bg-primary text-white text-xs rounded-full hover:bg-primary/90 transition-colors"
-              >
-                跳转
-              </button>
-            )}
-            {msg.content.includes("【取消】") && (
-              <button
-                onClick={() => {
-                  setMessages((prev) => [...prev, {
-                    role: "assistant",
-                    content: "好的，继续在当前页面。可以直接点击任务卡片或输入问题。",
-                    animate: true,
-                  }])
-                  scrollToBottom()
-                }}
-                className="px-3 py-1.5 bg-zinc-200 text-zinc-700 text-xs rounded-full hover:bg-zinc-300 transition-colors"
-              >
-                取消
-              </button>
-            )}
-            {msg.content.includes("【留在当前") && (
-              <button
-                onClick={() => {
-                  setMessages((prev) => [...prev, {
-                    role: "assistant",
-                    content: "好的，就在这里处理。你可以直接点击下方的任务卡片查看详情，也可以输入问题让我帮你操作。",
-                    animate: true,
-                  }])
-                  scrollToBottom()
-                }}
-                className="px-3 py-1.5 bg-zinc-200 text-zinc-700 text-xs rounded-full hover:bg-zinc-300 transition-colors"
-              >
-                留在当前
-              </button>
-            )}
-            {msg.content.includes("【进入") && (
-              <button
-                onClick={() => {
-                  const match = msg.content.match(/进入([^】]+)/)
-                  handleJumpToAgent(match ? match[1] : msg.agentName || "")
-                }}
-                className="px-3 py-1.5 bg-primary text-white text-xs rounded-full hover:bg-primary/90 transition-colors"
-              >
-                进入
-              </button>
-            )}
-          </div>
-        )}
-      </>
-    )
-  }
-
-  // 是否显示顶部今日任务入口（当有除默认消息外的其他消息时）
-  const showTaskBotEntry = messages.length > 1
-
   return (
-    <div className="h-full flex flex-col pt-6 px-0">
+    <div className="h-full min-h-0 flex flex-col pt-4 px-0">
       <div className="flex-1 flex flex-col bg-white ring-1 ring-zinc-100/60 rounded-2xl overflow-hidden min-h-0">
-        {/* 对话消息区 - 唯一滚动区域 */}
+        <TaskDock
+          isOpen={isTaskDockOpen}
+          onToggle={() => setIsTaskDockOpen((current) => !current)}
+          onSelectTask={handleTaskClick}
+        />
+
         <div className="flex-1 overflow-y-auto bg-white px-5 pt-6 pb-2 relative min-h-0">
-            {/* 顶部固定今日任务入口 */}
-            {showTaskBotEntry && (
-              <div className="sticky top-0 z-10 mb-4 animate-slide-down">
-                <button
-                  onClick={handleResendTaskSummary}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 transition-all duration-300 hover:shadow-md group"
-                >
-                  <RobotAvatarSVG className="w-8 h-8" />
-                  <div className="flex-1 text-left">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-zinc-800">今日任务</span>
-                      <span
-                        className="text-[10px] px-1.5 py-0.5 rounded-full text-white font-medium"
-                        style={{ backgroundColor: "#C9A96E" }}
-                      >
-                        智能机器人
-                      </span>
-                    </div>
-                    <p className="text-xs text-zinc-500 mt-0.5">点击查看今日 5 项待办任务摘要</p>
-                  </div>
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center bg-white/80 text-amber-600 group-hover:bg-white group-hover:scale-110 transition-all">
-                    <Sparkles className="w-3.5 h-3.5" />
-                  </div>
-                </button>
-              </div>
-            )}
-
-            {/* 消息列表 */}
-            {messages.map((msg, i) => (
-              <div
-                key={i}
-                className={`flex gap-2.5 mb-4 ${msg.role === "user" ? "flex-row-reverse" : ""} ${msg.animate ? "animate-fade-in-up" : ""}`}
-              >
-                {msg.role === "assistant" ? (
-                  <AgentAvatar agentInfo={msg.agentInfo} className="w-7 h-7" />
-                ) : (
-                  <div className="w-7 h-7 rounded-full bg-primary/80 flex items-center justify-center text-white text-[10px] font-medium shrink-0">我</div>
-                )}
-                {msg.role === "assistant" && msg.agentInfo ? (
-                  <div className="flex-1 min-w-0">
-                    <AgentNameTag agentInfo={msg.agentInfo} />
-                    <div className="max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed bg-zinc-100 text-zinc-800 rounded-tl-sm">
-                      {renderMessageContent(msg)}
-                    </div>
-                  </div>
-                ) : (
-                  <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                    msg.role === "user"
-                      ? "bg-primary/85 text-white rounded-br-sm"
-                      : "bg-zinc-100 text-zinc-800 rounded-tl-sm"
-                  }`}>
-                    {msg.role === "user" ? (
-                      <span>{msg.content}</span>
-                    ) : (
-                      renderMessageContent(msg)
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
-
-            <div ref={bottomRef} />
-          </div>
-
-          {/* 输入栏 */}
-          <div className="px-5 py-4 border-t border-zinc-100 bg-white shrink-0">
-            <div className="flex items-center gap-3 bg-zinc-100 rounded-full px-4 py-2.5">
-              <Sparkles className="w-4 h-4 text-zinc-400 shrink-0" />
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                placeholder="输入问题，或点击上方快捷追问"
-                className="flex-1 bg-transparent text-sm text-zinc-700 placeholder:text-zinc-300 outline-none"
-              />
-              {input && (
-                <button onClick={() => setInput("")} className="w-5 h-5 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-600 transition-colors">
-                  <X className="w-3 h-3" />
-                </button>
+          {messages.map((msg, i) => (
+            <div
+              key={i}
+              className={`flex gap-2.5 mb-4 ${msg.role === "user" ? "flex-row-reverse" : ""} ${msg.animate ? "animate-fade-in-up" : ""}`}
+            >
+              {msg.role === "assistant" ? (
+                <RobotAvatar className="w-7 h-7" />
+              ) : (
+                <div className="w-7 h-7 rounded-full bg-primary/80 flex items-center justify-center text-white text-[10px] font-medium shrink-0">我</div>
               )}
-              <button
-                onClick={handleSend}
-                disabled={!input.trim()}
-                className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center disabled:opacity-30 hover:bg-primary/90 transition-all shrink-0"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </button>
+              {msg.role === "assistant" ? (
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <span className="text-xs font-semibold text-zinc-700">今日任务</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-medium ring-1 ring-amber-100">
+                      智能机器人
+                    </span>
+                  </div>
+                  <div className="max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed bg-zinc-100 text-zinc-800 rounded-tl-sm whitespace-pre-wrap">
+                    {renderText(msg.content)}
+                  </div>
+                </div>
+              ) : (
+                <div className="max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed bg-primary/85 text-white rounded-br-sm">
+                  {msg.content}
+                </div>
+              )}
             </div>
+          ))}
+
+          <div ref={bottomRef} />
+        </div>
+
+        <div className="bg-white px-5 pb-4 pt-2 shrink-0">
+          <div className="flex min-h-12 items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-3 py-2 shadow-[0_8px_28px_rgba(15,23,42,0.06)] transition-colors focus-within:border-primary/35">
+            <button
+              type="button"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-zinc-500 transition-colors hover:bg-zinc-50 hover:text-zinc-800"
+              aria-label="添加附件"
+            >
+              <Paperclip className="h-4 w-4" />
+            </button>
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              placeholder="输入问题，或点击上方快捷追问"
+              className="h-8 min-w-0 flex-1 bg-transparent text-sm text-zinc-800 outline-none placeholder:text-zinc-300"
+            />
+            <button
+              type="button"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-zinc-500 transition-colors hover:bg-zinc-50 hover:text-zinc-800"
+              aria-label="语音输入"
+            >
+              <Mic className="h-4 w-4" />
+            </button>
+            <button
+              onClick={handleSend}
+              disabled={!input.trim()}
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-all ${
+                input.trim()
+                  ? "bg-primary text-white shadow-sm hover:bg-primary/90"
+                  : "bg-zinc-200 text-white cursor-not-allowed"
+              }`}
+              aria-label="发送"
+            >
+              <Send className="h-3.5 w-3.5" />
+            </button>
           </div>
         </div>
+      </div>
     </div>
   )
 }

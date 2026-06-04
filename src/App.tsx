@@ -1,7 +1,7 @@
 import { useState, useRef, createContext, useContext, useCallback, useEffect } from "react"
 import { SupportPage } from "@/pages/SupportPage"
-import { CollabPage } from "@/pages/CollabPage"
 import { DesignSchemePage } from "@/pages/DesignSchemePage"
+import { LoginPage } from "@/pages/LoginPage"
 import { V3Header, type V3Tab } from "@/components/V3Header"
 
 export interface AgentClickPayload {
@@ -46,10 +46,13 @@ function App() {
   const [activeTab, setActiveTab] = useState<V3Tab>(() => {
     const params = new URLSearchParams(window.location.search)
     const tabParam = params.get("tab") as V3Tab | null
-    return tabParam && ["employee", "support", "collab"].includes(tabParam)
+    return tabParam && ["employee", "support"].includes(tabParam)
       ? tabParam
       : "employee"
   })
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => !window.location.pathname.endsWith("/login")
+  )
   const [chatState, setChatState] = useState({
     isInChat: false,
     agentName: "",
@@ -62,6 +65,7 @@ function App() {
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
   const isPresentation = new URLSearchParams(window.location.search).get("page") === "presentation"
+  const isLoginPage = window.location.pathname.endsWith("/login")
 
   const openChat = useCallback(
     (agent: { name: string; image: string }, message?: string) => {
@@ -93,22 +97,11 @@ function App() {
     setAgentClickPayload(null)
   }, [])
 
-  const handleTabChange = (tab: V3Tab) => {
-    setActiveTab(tab)
-    const url = new URL(window.location.href)
-    url.searchParams.set("tab", tab)
-    window.history.replaceState({ tab }, "", url.toString())
-    // 切换 tab 时退出对话状态
-    if (tab !== "employee") {
-      setChatState((s) => ({ ...s, isInChat: false }))
-    }
-  }
-
   useEffect(() => {
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search)
       const tabParam = params.get("tab") as V3Tab | null
-      if (tabParam && ["employee", "support", "collab"].includes(tabParam)) {
+      if (tabParam && ["employee", "support"].includes(tabParam)) {
         setActiveTab(tabParam)
       }
     }
@@ -174,17 +167,33 @@ function App() {
     return <DesignSchemePage />
   }
 
+  if (isLoginPage && !isAuthenticated) {
+    return (
+      <LoginPage
+        onLogin={(tab: V3Tab) => {
+          setActiveTab(tab)
+          setIsAuthenticated(true)
+          const url = new URL(window.location.href)
+          url.pathname = "/"
+          url.search = ""
+          url.searchParams.set("tab", tab)
+          window.history.replaceState({ tab }, "", url.toString())
+        }}
+      />
+    )
+  }
+
   return (
     <ChatContext.Provider value={{ ...chatState, openChat, exitChat, activeTab, agentClickPayload, triggerAgentClick, clearAgentClick }}>
       <div className="h-screen flex flex-col bg-background overflow-hidden">
         {/* 统一顶部导航 - 固定不滚动 */}
         <div style={{ paddingTop: "8px" }}>
-          <V3Header activeTab={activeTab} onTabChange={handleTabChange} />
+          <V3Header activeTab={activeTab} />
         </div>
 
         {/* 滚动容器 - 全宽，滚动条在页面边缘 */}
-        <div className="flex-1 overflow-y-auto min-h-0" ref={topRef}>
-          <div className="max-w-[1200px] mx-auto w-full" style={{ paddingBottom: "12px" }}>
+        <div className={`flex-1 min-h-0 ${activeTab === "support" ? "overflow-hidden" : "overflow-y-auto"}`} ref={topRef}>
+          <div className={`max-w-[1200px] mx-auto w-full ${activeTab === "support" ? "h-full min-h-0 box-border" : ""}`} style={{ paddingBottom: "12px" }}>
 
             {/* 员工端：iframe 自动撑高 */}
             <div className={activeTab === "employee" ? "" : "hidden"}>
@@ -199,13 +208,8 @@ function App() {
             </div>
 
             {/* 业务支持端 */}
-            <div className={`h-full relative ${activeTab === "support" ? "" : "hidden"}`} style={{ minHeight: "calc(100vh - 160px)" }}>
+            <div className={`relative ${activeTab === "support" ? "h-full min-h-0" : "hidden"}`}>
               <SupportPage />
-            </div>
-
-            {/* 协同端 */}
-            <div className={`h-full relative ${activeTab === "collab" ? "" : "hidden"}`} style={{ minHeight: "calc(100vh - 160px)" }}>
-              <CollabPage />
             </div>
 
           </div>

@@ -92,7 +92,7 @@ function ArchitectureTab() {
 
           {/* 协同端 */}
           <div className="flex-1 bg-red-50/50 border border-red-200 rounded-lg p-5 flex flex-col items-center text-center">
-            <h3 className="text-red-800 font-bold mb-1">协同端 (新建)</h3>
+            <h3 className="text-red-800 font-bold mb-1">协同端 (待建)</h3>
             <p className="text-xs text-slate-500 mb-3">组织者角色</p>
             <div className="space-y-2 text-xs w-full">
               <p className="text-red-700/80">顶部协同智能体入口</p>

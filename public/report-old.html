@@ -174,98 +174,151 @@ body {
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 
-/* ── 架构图 ── */
-.arch-diagram {
-  display: grid;
-  grid-template-columns: 1fr 56px 1fr 56px 1fr;
-  align-items: stretch;
-  gap: 0;
+/* ── 新架构图：底座 + 三端一体 ── */
+.arch-unified {
+  position: relative;
+  padding: 20px 20px 0;
 }
-.arch-panel {
-  border-radius: 12px;
-  padding: 22px 20px;
-  min-height: 240px;
+.arch-tops {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  position: relative;
+  z-index: 2;
+}
+.arch-endpoint {
+  border-radius: 14px;
+  padding: 20px;
+  text-align: center;
   position: relative;
 }
-.arch-panel.emp {
+.arch-endpoint.emp {
   background: var(--blue-light);
   border: 1.5px solid var(--blue-mid);
 }
-.arch-panel.sup {
+.arch-endpoint.sup {
   background: var(--orange-light);
   border: 1.5px solid var(--orange-mid);
 }
-.arch-panel.col {
+.arch-endpoint.col {
   background: #fef2f2;
-  border: 1.5px dashed #fca5a5;
+  border: 1.5px solid #fca5a5;
 }
-.arch-badge {
+.arch-endpoint .ep-badge {
   display: inline-block;
   font-size: 10px;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 10px;
   margin-bottom: 10px;
 }
-.arch-panel.emp .arch-badge { background: var(--blue-mid); color: #1e40af; }
-.arch-panel.sup .arch-badge { background: var(--orange-mid); color: #9a3412; }
-.arch-panel.col .arch-badge { background: #fca5a5; color: #991b1b; }
-.arch-panel h3 {
-  font-size: 14px;
+.arch-endpoint.emp .ep-badge { background: var(--blue-mid); color: #1e40af; }
+.arch-endpoint.sup .ep-badge { background: var(--orange-mid); color: #9a3412; }
+.arch-endpoint.col .ep-badge { background: #fca5a5; color: #991b1b; }
+.arch-endpoint h3 {
+  font-size: 15px;
   font-weight: 800;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
-.arch-role {
+.arch-endpoint .ep-role {
   font-size: 11px;
   color: var(--text-muted);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
-.arch-panel ul {
-  list-style: none;
-}
-.arch-panel ul li {
+.arch-endpoint .ep-cap {
   font-size: 11px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  margin-bottom: 4px;
+  line-height: 1.7;
+  text-align: left;
   background: rgba(255,255,255,0.75);
-  line-height: 1.5;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.arch-endpoint .ep-cap li {
+  list-style: none;
+  padding: 2px 0;
   display: flex;
   align-items: flex-start;
   gap: 5px;
 }
-.arch-arrow {
+
+/* 连接线：三端到底座 */
+.arch-connectors {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  height: 36px;
+  position: relative;
+  z-index: 1;
+  margin: 0 40px;
+}
+.arch-connectors .connector {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
+}
+.arch-connectors .connector-line {
+  width: 2px;
+  flex: 1;
+  background: linear-gradient(to bottom, #cbd5e1 0%, #94a3b8 100%);
+}
+.arch-connectors .connector-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #94a3b8;
+  margin-top: -4px;
+}
+
+/* 底座 */
+.arch-base {
+  position: relative;
+  z-index: 2;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border-radius: 16px;
+  padding: 22px 28px;
+  color: #fff;
+  text-align: center;
+  margin-top: 0;
+}
+.arch-base h3 {
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 6px;
+  letter-spacing: 0.02em;
+}
+.arch-base .base-desc {
+  font-size: 12px;
+  color: #cbd5e1;
+  margin-bottom: 14px;
+}
+.arch-base .base-pills {
+  display: flex;
   justify-content: center;
-  gap: 6px;
-  padding: 12px 4px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
-.arch-arrow-icon {
-  font-size: 18px;
-  color: #9ca3af;
+.arch-base .base-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: #e2e8f0;
 }
-.arch-arrow-label {
-  font-size: 9px;
+
+/* 底座两侧标注 */
+.arch-annotation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding: 0 8px;
+}
+.arch-annotation span {
+  font-size: 11px;
   color: var(--text-muted);
-  text-align: center;
-  line-height: 1.4;
-  writing-mode: vertical-rl;
-  letter-spacing: 0.03em;
-}
-.arch-ai-tag {
-  position: absolute;
-  bottom: 14px;
-  left: 14px;
-  right: 14px;
-  background: var(--purple-light);
-  border: 1px dashed #c4b5fd;
-  border-radius: 8px;
-  padding: 7px 10px;
-  font-size: 10px;
-  color: var(--purple);
-  text-align: center;
 }
 
 /* ── 三端卡片 ── */
@@ -324,68 +377,6 @@ body {
   color: var(--accent);
   font-weight: 700;
   flex-shrink: 0;
-}
-
-/* ── 闭环卡片 ── */
-.loop-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.loop-card {
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px 18px;
-}
-.loop-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-.loop-name {
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--text);
-}
-.loop-tag {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 10px;
-  border-radius: 10px;
-  background: var(--gray-light);
-  color: var(--text-muted);
-  border: 1px solid var(--border);
-}
-.loop-flow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-  margin-bottom: 10px;
-}
-.loop-step {
-  font-size: 12px;
-  font-weight: 500;
-  padding: 5px 12px;
-  border-radius: 8px;
-  border: 1px solid;
-  white-space: nowrap;
-}
-.loop-step.blue { background: var(--blue-light); border-color: var(--blue-mid); color: var(--blue); }
-.loop-step.orange { background: var(--orange-light); border-color: var(--orange-mid); color: var(--orange); }
-.loop-step.red { background: #fef2f2; border-color: #fca5a5; color: #dc2626; }
-.loop-step.green { background: var(--green-light); border-color: #86efac; color: var(--green); }
-.loop-step.purple { background: var(--purple-light); border-color: #c4b5fd; color: var(--purple); }
-.loop-arrow-char {
-  font-size: 13px;
-  color: #9ca3af;
-}
-.loop-note {
-  font-size: 12px;
-  color: var(--text-muted);
-  line-height: 1.6;
 }
 
 /* ── iframe 预览 ── */
@@ -489,6 +480,58 @@ body {
   line-height: 1.65;
 }
 
+/* ── 助手矩阵展示 ── */
+.agent-matrix {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.agent-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.agent-chip .agent-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  background: var(--blue-light);
+}
+.agent-chip .agent-name { color: var(--text); }
+.agent-chip .agent-order {
+  font-size: 10px;
+  color: var(--text-muted);
+  background: var(--gray-light);
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-left: 4px;
+}
+
+/* ── 提示词样式 ── */
+.prompt-bubble {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--purple-light);
+  border: 1px dashed #c4b5fd;
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--purple);
+  margin: 4px 4px 4px 0;
+}
+
 /* ── Badge ── */
 .badge {
   display: inline-flex;
@@ -505,149 +548,72 @@ body {
 .badge-purple { background: var(--purple-light); color: var(--purple); }
 .badge-gray { background: var(--gray-light); color: var(--gray); }
 
-/* ── 数据模型 ── */
-.model-grid {
-  display: grid;
-  grid-template-columns: 1fr 40px 1fr 40px 1fr;
-  align-items: center;
-  gap: 0;
-  margin: 16px 0;
-}
-.model-box {
-  border-radius: 12px;
-  padding: 16px 18px;
-  text-align: center;
-}
-.model-box.em { background: var(--blue-light); border: 1.5px solid var(--blue-mid); }
-.model-box.su { background: var(--orange-light); border: 1.5px solid var(--orange-mid); }
-.model-box.co { background: #fef2f2; border: 1.5px solid #fca5a5; }
-.model-box h4 { font-size: 12px; font-weight: 700; margin-bottom: 8px; }
-.model-field {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  margin: 2px;
-  display: inline-block;
-  background: rgba(255,255,255,0.8);
-  border: 1px solid rgba(0,0,0,0.06);
-}
-.model-arrow { text-align: center; color: #d1d5db; font-size: 20px; }
+/* ── 计划表格 ── */
+.plan-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+.plan-table th { background: var(--gray-light); padding: 8px 12px; text-align: left; font-weight: 700; font-size: 11px; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+.plan-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.55; }
+.plan-table tr:last-child td { border-bottom: none; }
+.plan-table tr:hover td { background: #fafafa; }
 
-/* table */
-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
-th { background: var(--gray-light); padding: 8px 12px; text-align: left; font-weight: 700; font-size: 11px; color: var(--text-muted); border-bottom: 1px solid var(--border); }
-td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.55; }
-tr:last-child td { border-bottom: none; }
-tr:hover td { background: #fafafa; }
-
-/* 模拟 UI */
-.mock-emp {
+/* ── AI对话示意 ── */
+.chat-mock {
   background: #f8fafc;
   border-radius: 10px;
   padding: 16px;
   border: 1px solid var(--border);
 }
-.mock-tip {
+.chat-msg {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  margin-bottom: 6px;
-  font-size: 11px;
-  background: #fff;
-  border: 1px solid var(--border);
-}
-.mock-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  margin-top: 3px;
-}
-.mock-ai-card {
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 12px 14px;
-  display: flex;
-  align-items: center;
   gap: 10px;
-  margin-bottom: 6px;
+  margin-bottom: 10px;
 }
-.mock-ai-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+.chat-msg.ai { flex-direction: row; }
+.chat-msg.user { flex-direction: row-reverse; }
+.chat-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 14px;
   flex-shrink: 0;
 }
-.s-card {
-  background: #fff;
-  border: 1px solid var(--border);
-  border-left: 3px solid #dc2626;
-  border-radius: 8px;
+.chat-avatar.ai { background: var(--blue-light); }
+.chat-avatar.user { background: var(--gray-light); }
+.chat-bubble {
+  max-width: 70%;
   padding: 10px 14px;
-  margin-bottom: 8px;
+  border-radius: 12px;
   font-size: 12px;
+  line-height: 1.6;
 }
-.s-card.warn { border-left-color: #f59e0b; }
-.s-ai {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  background: var(--purple-light);
-  border: 1px solid #ddd6fe;
-  border-radius: 6px;
-  margin-top: 8px;
-  font-size: 11px;
-  color: var(--purple);
-}
-.sbtn {
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  border: none;
-  cursor: default;
-}
-.sbtn-p { background: var(--accent); color: #fff; }
-.sbtn-o { background: var(--gray-light); color: var(--gray); border: 1px solid var(--border); }
-.col-tabs { display: flex; border-bottom: 1px solid var(--border); background: #fff; }
-.col-tab { padding: 7px 12px; font-size: 11px; font-weight: 500; color: var(--text-muted); border-bottom: 2px solid transparent; cursor: default; }
-.col-tab.on { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
-.col-card {
-  background: #fff;
+.chat-msg.ai .chat-bubble {
+  background: var(--white);
   border: 1px solid var(--border);
-  border-left: 3px solid #dc2626;
-  border-radius: 8px;
-  padding: 10px 14px;
-  margin-bottom: 8px;
-  font-size: 12px;
+  border-top-left-radius: 2px;
 }
-.col-card.med { border-left-color: #f59e0b; }
-.col-chat {
-  padding: 8px 12px;
-  border-top: 1px solid var(--border);
-  background: #fafafa;
+.chat-msg.user .chat-bubble {
+  background: var(--accent);
+  color: #fff;
+  border-top-right-radius: 2px;
+}
+.chat-input-bar {
   display: flex;
-  align-items: center;
   gap: 8px;
-}
-.col-input {
-  flex: 1;
-  background: #fff;
+  align-items: center;
+  padding: 10px;
+  background: var(--white);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 6px 12px;
-  font-size: 11px;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+.chat-input-placeholder {
+  flex: 1;
+  font-size: 12px;
   color: var(--text-muted);
 }
-.col-send {
+.chat-send-btn {
   padding: 6px 14px;
   background: var(--accent);
   color: #fff;
@@ -655,14 +621,12 @@ tr:hover td { background: #fafafa; }
   font-size: 11px;
   font-weight: 600;
   border: none;
-  cursor: default;
 }
 
 @media (max-width: 768px) {
   .cover, .nav, .main { padding-left: 20px; padding-right: 20px; }
-  .arch-diagram, .model-grid { grid-template-columns: 1fr; }
-  .arch-arrow { display: none; }
-  .panel-cards, .loop-grid, .info-grid { grid-template-columns: 1fr; }
+  .arch-tops, .panel-cards, .info-grid { grid-template-columns: 1fr; }
+  .arch-connectors { display: none; }
 }
 </style>
 </head>
@@ -670,8 +634,16 @@ tr:hover td { background: #fafafa; }
 
 <!-- ══ 封面 ══ -->
 <div class="cover">
+  <div class="cover-eyebrow">AI WORKBENCH / THREE-ENDPOINT COLLABORATION</div>
   <h1>员工工作台三端协同 - 设计方案</h1>
-  <div class="cover-sub">基于518智能体项目会议纪要 · 公司级员工工作台三端建设</div>
+  <div class="cover-sub">基于518智能体项目会议纪要 · 公司级员工工作台三端建设 · 领导交流意见修订版</div>
+  <div class="cover-tags">
+    <span class="cover-tag">员工端 · 已建</span>
+    <span class="cover-tag">业务支持端 · 新建</span>
+    <span class="cover-tag">协同端 · 新建</span>
+    <span class="cover-tag">AI交互式</span>
+    <span class="cover-tag">底座一体化</span>
+  </div>
 </div>
 
 <!-- ══ Tab 导航 ══ -->
@@ -687,172 +659,173 @@ tr:hover td { background: #fafafa; }
 <!-- ════════════════════ 整体架构 ════════════════════ -->
 <div id="tab-arch" class="tab-content active">
 
-  <!-- 1. 架构图 -->
+  <!-- 1. 架构图：底座 + 三端一体 -->
   <div class="card">
-    <div class="block-title"><span class="bar"></span>三端协同架构全景图</div>
-    <div class="arch-diagram">
-
-      <div class="arch-panel emp">
-        <div class="arch-badge">端一 · 已建</div>
-        <h3>员工端</h3>
-        <div class="arch-role">使用对象：各条线员工</div>
-        <ul>
-          <li>⚡ 工作提示 — 紧急/风险/进展/待办/日程</li>
-          <li>📊 业绩与绩效 — 个人经营数据</li>
-          <li>🤖 AI 团队 — 客户分析/业务分析/方案生成/客户服务</li>
-          <li>💬 全局 AI 对话输入框</li>
-          <li>📤 点击工作提示唤起对应智能体</li>
-        </ul>
-        <div class="arch-ai-tag">🤖 AI 智能体驱动 — 四大智能体协作</div>
+    <div class="block-title"><span class="bar"></span>三端一体架构全景图</div>
+    <div class="arch-unified">
+      <!-- 三端 -->
+      <div class="arch-tops">
+        <div class="arch-endpoint emp">
+          <div class="ep-badge">端一 · 已建</div>
+          <h3>员工端</h3>
+          <div class="ep-role">使用对象：各条线员工 / 客户经理</div>
+          <ul class="ep-cap">
+            <li>· AI总入口 — 统一智能体交互界面</li>
+            <li>· 今日任务 — AI卡片式推送个人工作</li>
+            <li>· 机器人团队 — 4大Agent助手矩阵</li>
+          </ul>
+        </div>
+        <div class="arch-endpoint sup">
+          <div class="ep-badge">端二 · 新建</div>
+          <h3>业务支持端</h3>
+          <div class="ep-role">使用对象：各条线支持中心人员</div>
+          <ul class="ep-cap">
+            <li>· 5类业务助手 — 固化顺序，AI交互</li>
+            <li>· 今日任务 — 统一推送待办事项</li>
+            <li>· 统一入口 — 各业务线内容集成</li>
+          </ul>
+        </div>
+        <div class="arch-endpoint col">
+          <div class="ep-badge">端三 · 新建</div>
+          <h3>协同端</h3>
+          <div class="ep-role">使用对象：组织者 / 负责人 / 决策层</div>
+          <ul class="ep-cap">
+            <li>· 组织协同入口 — 按业务分类</li>
+            <li>· AI提示词引导 — 自然语言交互</li>
+            <li>· 经营看板查询 — AI对话式调取</li>
+          </ul>
+        </div>
       </div>
 
-      <div class="arch-arrow">
-        <div class="arch-arrow-icon">→</div>
-        <div class="arch-arrow-label">提交事项规则知会</div>
-        <div class="arch-arrow-icon">←</div>
-        <div class="arch-arrow-label">结果反馈</div>
+      <!-- 连接线 -->
+      <div class="arch-connectors">
+        <div class="connector"><div class="connector-line"></div><div class="connector-dot"></div></div>
+        <div class="connector"><div class="connector-line"></div><div class="connector-dot"></div></div>
+        <div class="connector"><div class="connector-line"></div><div class="connector-dot"></div></div>
       </div>
 
-      <div class="arch-panel sup">
-        <div class="arch-badge">端二 · 新建</div>
-        <h3>业务支持端</h3>
-        <div class="arch-role">使用对象：各条线支持中心人员</div>
-        <ul>
-          <li>📋 事项列表 — 资管/投行/零售队列</li>
-          <li>🧠 AI 预判 + 分类路由</li>
-          <li>✅ 质控 / 复核 / 预利处理</li>
-          <li>📊 事项追踪看板</li>
-          <li>🔔 规则知会确认下发</li>
-        </ul>
-        <div class="arch-ai-tag">🤖 AI 辅助判断 — 自动路由 + 优先级</div>
+      <!-- 底座 -->
+      <div class="arch-base">
+        <h3>公司自动驾驶大模型底座</h3>
+        <div class="base-desc">统一数据原料 · 统一任务服务 · 统一智能体编排 · 三端共享同步响应</div>
+        <div class="base-pills">
+          <span class="base-pill">统一任务表（今日任务）</span>
+          <span class="base-pill">统一业绩绩效原料</span>
+          <span class="base-pill">统一客户/项目库</span>
+          <span class="base-pill">多智能体协同编排</span>
+          <span class="base-pill">AI自然语言交互</span>
+        </div>
       </div>
 
-      <div class="arch-arrow">
-        <div class="arch-arrow-icon">→</div>
-        <div class="arch-arrow-label">提请协同跨部门申请</div>
-        <div class="arch-arrow-icon">←</div>
-        <div class="arch-arrow-label">决策指令下发</div>
+      <div class="arch-annotation">
+        <span>三类角色视图，不是三个独立系统</span>
+        <span>一人可多角色，三端可交叉</span>
       </div>
-
-      <div class="arch-panel col">
-        <div class="arch-badge">端三 · 新建</div>
-        <h3>协同端</h3>
-        <div class="arch-role">使用对象：分管领导 / 决策层</div>
-        <ul>
-          <li>🗓 请示事项 — 批准执行 / 批注意见</li>
-          <li>📁 业务协同 — 跨部门事项处置</li>
-          <li>⚠️ 风险议题 — 合规风险集中决策</li>
-          <li>👥 团队协同 — 任务分配与跟踪</li>
-          <li>🚨 应急组织 — 突发事件应急响应</li>
-        </ul>
-        <div class="arch-ai-tag">🤖 AI 会议纪要 + 决策摘要生成</div>
-      </div>
-
     </div>
   </div>
 
   <div class="divider"></div>
 
-  <!-- 3. 三端卡片介绍 -->
+  <!-- 2. 三端定位说明 -->
   <div class="block-title"><span class="bar"></span>三端定位说明</div>
   <div class="panel-cards">
     <div class="panel-card emp">
       <div class="pc-tag">端一 · 员工端</div>
       <h4>员工端</h4>
-      <div class="pc-role">使用角色：各条线员工</div>
-      <div class="pc-desc">以工作提示为核心，聚合员工日常所需的预警、业绩、AI智能体等功能，让员工在一个页面内完成工作感知与AI辅助作业。</div>
+      <div class="pc-role">使用角色：各条线员工 / 客户经理</div>
+      <div class="pc-desc">以AI交互为核心，聚合今日任务、业绩数据、智能体助手。员工在一个对话界面内完成工作感知与AI辅助。</div>
       <ul class="pc-features">
-        <li>工作提示驱动注意力管理</li>
-        <li>四大AI智能体一键唤起</li>
-        <li>个人业绩数据实时呈现</li>
-        <li>提交事项至支持端处理</li>
+        <li>沿用已评审通过的原有设计</li>
+        <li>三大块合一：AI入口 + 今日任务 + 机器人团队</li>
+        <li>助手即提示词，对话框与助手矩阵一体</li>
       </ul>
     </div>
     <div class="panel-card sup">
-      <div class="pc-tag">端二 · 新建</div>
+      <div class="pc-tag">端二 · 业务支持端</div>
       <h4>业务支持端</h4>
       <div class="pc-role">使用角色：各条线支持中心人员</div>
-      <div class="pc-desc">不管人，只管业务动作。负责接收员工端提交的事项，经AI路由与质控后处置，需跨部门决策则提请协同端。</div>
+      <div class="pc-desc">统一入口，聚合5类业务助手。AI交互式界面，不是传统Table+按钮。各业务线内容自行填充。</div>
       <ul class="pc-features">
-        <li>按条线分类管理事项队列</li>
-        <li>AI自动预判优先级与分类</li>
-        <li>质控/复核/规则知会闭环</li>
-        <li>将高优先级事项推送协同端</li>
+        <li>5类助手固定顺序：客户分析→业务分析→方案生成→交叉验证→客户服务</li>
+        <li>AI卡片式今日任务推送</li>
+        <li>共享协同，非个人龙虾空间</li>
       </ul>
     </div>
     <div class="panel-card col">
-      <div class="pc-tag">端三 · 新建</div>
+      <div class="pc-tag">端三 · 协同端</div>
       <h4>协同端</h4>
-      <div class="pc-role">使用角色：分管领导 / 决策层</div>
-      <div class="pc-desc">汇聚需要跨部门协同和领导决策的事项与议题，支持批准执行和批注意见，形成有记录、可追溯的决策闭环。</div>
+      <div class="pc-role">使用角色：组织者 / 负责人 / 决策层</div>
+      <div class="pc-desc">只做组织协同入口，加AI提示词引导。经营数据通过AI对话查询，不固化传统管理看板。</div>
       <ul class="pc-features">
-        <li>请示事项集中批阅</li>
-        <li>业务协同与风险议题决策</li>
-        <li>应急组织快速响应</li>
-        <li>AI会议纪要与决策摘要</li>
+        <li>入口+提示词，不做五个固定板块</li>
+        <li>经营看板通过AI交互调取</li>
+        <li>与员工端、支持端共用同一底座</li>
       </ul>
     </div>
   </div>
 
   <div class="divider"></div>
 
-  <!-- 4. 三个闭环 -->
-  <div class="block-title"><span class="bar"></span>三大业务闭环</div>
-  <div class="loop-grid">
-    <div class="loop-card">
-      <div class="loop-header">
-        <span class="loop-name">闭环一：员工独立完成</span>
-        <span class="loop-tag">最常见</span>
-      </div>
-      <div class="loop-flow">
-        <span class="loop-step blue">员工发起业务</span>
-        <span class="loop-arrow-char">→</span>
-        <span class="loop-step purple">AI智能体处理</span>
-        <span class="loop-arrow-char">→</span>
-        <span class="loop-step blue">员工确认/输出</span>
-        <span class="loop-arrow-char">→</span>
-        <span class="loop-step green">完成</span>
-      </div>
-      <div class="loop-note">支持端在后台自动感知（规则触达），不介入处理</div>
+  <!-- 3. 核心设计原则 -->
+  <div class="block-title"><span class="bar"></span>核心设计原则</div>
+  <div class="info-grid">
+    <div class="info-cell">
+      <div class="info-label">AI交互式，不是传统开发</div>
+      <div class="info-value">所有操作以自然语言对话为主，助手即提示词，内容以AI卡片推送，拒绝Table+状态+按钮的传统OA形态。</div>
     </div>
-    <div class="loop-card">
-      <div class="loop-header">
-        <span class="loop-name">闭环二：员工→支持中心协同</span>
-        <span class="loop-tag">需质控 / 复核</span>
-      </div>
-      <div class="loop-flow">
-        <span class="loop-step blue">员工主动提交工单</span>
-        <span class="loop-arrow-char">→</span>
-        <span class="loop-step purple">AI预判+分类路由</span>
-        <span class="loop-arrow-char">→</span>
-        <span class="loop-step orange">支持中心看板接单</span>
-        <span class="loop-arrow-char">→</span>
-        <span class="loop-step red">决策/质控/复核</span>
-        <span class="loop-arrow-char">→</span>
-        <span class="loop-step green">完成</span>
-      </div>
-      <div class="loop-note">支持端也可主动前置介入（规则触发），无需等员工提交</div>
+    <div class="info-cell">
+      <div class="info-label">底座一体化，三端共享</div>
+      <div class="info-value">三端共用公司自动驾驶大模型底座，统一任务表、统一客户/项目库、统一原料信息，信息同步响应。</div>
     </div>
-    <div class="loop-card">
-      <div class="loop-header">
-        <span class="loop-name">闭环三：支持中心→圆桌会议协同</span>
-        <span class="loop-tag">跨部门 / 资源申请</span>
-      </div>
-      <div class="loop-flow">
-        <span class="loop-step orange">支持端/员工提请协同</span>
-        <span class="loop-arrow-char">→</span>
-        <span class="loop-step purple">规则研判+议题生成</span>
-        <span class="loop-arrow-char">→</span>
-        <span class="loop-step red">圆桌会议议题</span>
-        <span class="loop-arrow-char">→</span>
-        <span class="loop-step red">高级领导决策</span>
-        <span class="loop-arrow-char">→</span>
-      </div>
-      <div class="loop-flow" style="margin-top:6px">
-        <span class="loop-step" style="background:#f5f3ff;border-color:#c4b5fd;color:#7c3aed">指令下发至相关端</span>
-      </div>
-      <div class="loop-note">三个闭环可并行触发、不强制串联，员工端也可直接提请协同端（越级申请）</div>
+    <div class="info-cell">
+      <div class="info-label">三类角色视图，可交叉</div>
+      <div class="info-value">三端是同一平台上的三类角色视图，不是三个独立系统。综合型员工可三端全用，支持端与协同端强调共享协同。</div>
     </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 4. 实施计划 -->
+  <div class="block-title"><span class="bar"></span>实施计划</div>
+  <div class="card" style="padding:0;overflow:hidden;">
+    <table class="plan-table">
+      <tr>
+        <th style="width:80px">阶段</th>
+        <th style="width:140px">内容</th>
+        <th>具体工作</th>
+        <th style="width:80px">工期</th>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blue">P1</span></td>
+        <td>汇报稿重绘</td>
+        <td>架构图改为"底座+三端一体"形态；删除流程箭头与闭环图；简化三端定位描述；同步DesignSchemePage</td>
+        <td>1-2天</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blue">P2</span></td>
+        <td>员工端微调</td>
+        <td>恢复/沿用已评审通过的原有设计；三大块整体化（AI入口+今日任务+机器人矩阵）；助手与对话框合一；历史对话位置设计</td>
+        <td>1-2天</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-orange">P3</span></td>
+        <td>业务支持端重做</td>
+        <td>5个助手固定顺序固化；删除传统侧边栏+Table；改为大对话框+助手矩阵AI交互界面；今日任务卡片式推送；与员工端风格统一</td>
+        <td>3-4天</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-green">P4</span></td>
+        <td>协同端简化</td>
+        <td>删除请示事项/经营看板/风险提示/队伍状况/应急组织五个板块；只做组织协同入口+AI提示词；经营数据通过AI对话查询</td>
+        <td>1-2天</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-purple">P5</span></td>
+        <td>统一检查</td>
+        <td>三端风格统一检查；iframe预览更新；业务部门宣讲会材料准备</td>
+        <td>0.5天</td>
+      </tr>
+    </table>
   </div>
 
 </div><!-- /tab-arch -->
@@ -861,46 +834,73 @@ tr:hover td { background: #fafafa; }
 <!-- ════════════════════ 员工端 ════════════════════ -->
 <div id="tab-emp" class="tab-content">
 
-  <!-- iframe 预览 -->
+  <div class="endpoint-hero emp">
+    <div class="ep-label">端一 · 已建 · 尽量不动</div>
+    <div class="ep-title">员工端</div>
+    <div class="ep-desc">沿用原有已评审通过的设计。整体是三大块合一的AI交互界面：AI总入口 + 今日任务 + 机器人团队。助手即提示词，对话框与助手矩阵是一体的。</div>
+  </div>
+
   <div class="block-title"><span class="bar"></span>页面原型预览</div>
   <div class="preview-wrap">
     <div class="preview-bar">
-      <div class="preview-dot" style="background:#ef4444"></div>
-      <div class="preview-dot" style="background:#f59e0b"></div>
-      <div class="preview-dot" style="background:#22c55e"></div>
-      <div class="preview-url">aiworkspace-bsged01m2.maozi.io — 员工端</div>
+      <div class="preview-dot" style="background:#ef4444;"></div>
+      <div class="preview-dot" style="background:#f59e0b;"></div>
+      <div class="preview-dot" style="background:#22c55e;"></div>
+      <div class="preview-url">aiworkspace-bsged01m2.maozi.io/?tab=employee</div>
       <a class="preview-label" href="https://aiworkspace-bsged01m2.maozi.io/?tab=employee" target="_blank">新窗口打开 ↗</a>
     </div>
     <iframe class="preview-frame" src="https://aiworkspace-bsged01m2.maozi.io/?tab=employee" title="员工端原型"></iframe>
   </div>
 
-  <div class="endpoint-hero emp">
-    <div class="ep-title">员工端</div>
-    <div class="ep-desc">以工作提示为核心，聚合员工日常所需的预警、业绩、AI智能体，让员工在一个页面内完成工作感知与AI辅助作业。</div>
-  </div>
+  <div class="divider"></div>
 
+  <div class="block-title"><span class="bar"></span>核心设计要点</div>
   <div class="info-grid">
     <div class="info-cell">
-      <div class="info-label">核心定位</div>
-      <div class="info-value">员工日常工作的统一入口；工作提示驱动注意力管理，AI智能体一键调用。</div>
+      <div class="info-label">沿用原有设计</div>
+      <div class="info-value">员工端原有设计已经过多轮评审，整体风格不动。只增加三端切换入口，以及优化三大块的整体感。</div>
     </div>
     <div class="info-cell">
-      <div class="info-label">主要功能模块</div>
-      <div class="info-value">工作提示 · 业绩绩效 · AI智能体团队 · 全局 AI 对话</div>
+      <div class="info-label">三大块合一</div>
+      <div class="info-value">① 顶部AI总入口（头像+提示词区）② 中间今日任务（AI卡片式，非Table）③ 底部AI助手矩阵（4个Agent头像平铺+对话框）。三块视觉上是一个整体。</div>
     </div>
     <div class="info-cell">
-      <div class="info-label">四大 AI 智能体</div>
-      <div class="info-value">客户分析 · 业务分析 · 方案生成 · 客户服务</div>
+      <div class="info-label">助手即提示词</div>
+      <div class="info-value">点助手头像等于在输入框填入该Agent的提示词前缀。助手和直接输入是一回事，只是给用户预设了快捷入口。</div>
     </div>
   </div>
 
-  <div class="card" style="margin-bottom:20px">
-    <div class="block-title"><span class="bar"></span>设计要点</div>
-    <div style="font-size:12px;color:var(--text-muted);line-height:1.8">
-      <p style="margin-bottom:8px"><strong style="color:var(--text)">零学习成本：</strong>工作提示按紧急/风险/进展/待办/日程五类聚合，员工打开页面即可感知当日重点工作，无需培训。</p>
-      <p style="margin-bottom:8px"><strong style="color:var(--text)">AI 无缝嵌入：</strong>四大智能体以卡片形式常驻页面，点击直接对话；全局输入框支持自然语言唤起任意智能体，减少操作路径。</p>
-      <p><strong style="color:var(--text)">一键提交事项：</strong>工作提示可直接转化为事项提交至业务支持端，形成"感知→处理→反馈"闭环。</p>
+  <div class="divider"></div>
+
+  <div class="block-title"><span class="bar"></span>AI交互示意</div>
+  <div class="chat-mock">
+    <div class="chat-msg ai">
+      <div class="chat-avatar ai">🤖</div>
+      <div class="chat-bubble">
+        <strong>早安，今天是5月26日</strong><br/>
+        您有 <strong>3项今日任务</strong>：<br/>
+        1. 贵州茅台定增方案客户分析待启动<br/>
+        2. 高净值客户A预约下午2点拜访<br/>
+        3. 本周业绩回顾报告待提交<br/>
+        需要我帮您优先处理哪一项？
+      </div>
     </div>
+    <div class="chat-msg user">
+      <div class="chat-avatar user">👤</div>
+      <div class="chat-bubble">帮我分析贵州茅台的客户画像</div>
+    </div>
+    <div class="chat-msg ai">
+      <div class="chat-avatar ai">🔍</div>
+      <div class="chat-bubble">已调用【客户分析助手】，正在为您生成贵州茅台的机构客户画像...</div>
+    </div>
+    <div class="chat-input-bar">
+      <span class="chat-input-placeholder">输入问题，或点击下方助手快捷提问...</span>
+      <span class="chat-send-btn">发送</span>
+    </div>
+  </div>
+
+  <div style="margin-top:12px;font-size:11px;color:var(--text-muted);">
+    注：以上为AI交互示意，实际以嵌入的原型页面为准。
   </div>
 
 </div><!-- /tab-emp -->
@@ -909,46 +909,90 @@ tr:hover td { background: #fafafa; }
 <!-- ════════════════════ 业务支持端 ════════════════════ -->
 <div id="tab-sup" class="tab-content">
 
-  <!-- iframe 预览 -->
+  <div class="endpoint-hero sup">
+    <div class="ep-label">端二 · 新建 · AI交互式重做</div>
+    <div class="ep-title">业务支持端</div>
+    <div class="ep-desc">5类业务助手固定顺序，AI交互式界面。不是传统侧边栏+Table+按钮，而是大对话框+助手矩阵。各业务线内容自行填充，我们只提供统一入口和标准。</div>
+  </div>
+
+  <div class="block-title"><span class="bar"></span>5类业务助手（固定顺序）</div>
+  <div class="agent-matrix">
+    <div class="agent-chip">
+      <div class="agent-avatar">🔍</div>
+      <span class="agent-name">客户分析</span>
+      <span class="agent-order">1</span>
+    </div>
+    <div class="agent-chip">
+      <div class="agent-avatar">📊</div>
+      <span class="agent-name">业务分析</span>
+      <span class="agent-order">2</span>
+    </div>
+    <div class="agent-chip">
+      <div class="agent-avatar">⚙️</div>
+      <span class="agent-name">方案生成</span>
+      <span class="agent-order">3</span>
+    </div>
+    <div class="agent-chip">
+      <div class="agent-avatar">🔀</div>
+      <span class="agent-name">交叉验证</span>
+      <span class="agent-order">4</span>
+    </div>
+    <div class="agent-chip">
+      <div class="agent-avatar">🎧</div>
+      <span class="agent-name">客户服务</span>
+      <span class="agent-order">5</span>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:12px;">
+    <div style="font-size:12px;color:var(--text-muted);line-height:1.7;">
+      <strong style="color:var(--text)">说明：</strong>此5类助手顺序为陶总确定，各业务线（资管/投行/零售等）在此基础上自行设计二级提示词和具体模型能力。业务支持端的核心是统一入口和交互标准，不是替业务线做内容。
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
   <div class="block-title"><span class="bar"></span>页面原型预览</div>
   <div class="preview-wrap">
     <div class="preview-bar">
-      <div class="preview-dot" style="background:#ef4444"></div>
-      <div class="preview-dot" style="background:#f59e0b"></div>
-      <div class="preview-dot" style="background:#22c55e"></div>
-      <div class="preview-url">aiworkspace-bsged01m2.maozi.io — 业务支持端</div>
+      <div class="preview-dot" style="background:#ef4444;"></div>
+      <div class="preview-dot" style="background:#f59e0b;"></div>
+      <div class="preview-dot" style="background:#22c55e;"></div>
+      <div class="preview-url">aiworkspace-bsged01m2.maozi.io/?tab=support</div>
       <a class="preview-label" href="https://aiworkspace-bsged01m2.maozi.io/?tab=support" target="_blank">新窗口打开 ↗</a>
     </div>
     <iframe class="preview-frame" src="https://aiworkspace-bsged01m2.maozi.io/?tab=support" title="业务支持端原型"></iframe>
   </div>
 
-  <div class="endpoint-hero sup">
-    <div class="ep-title">业务支持端</div>
-    <div class="ep-desc">不管人，只管业务动作。负责接收员工端提交的事项，经AI路由与质控后处置，需跨部门决策则提请协同端。</div>
-  </div>
+  <div class="divider"></div>
 
+  <div class="block-title"><span class="bar"></span>核心设计要点</div>
   <div class="info-grid">
     <div class="info-cell">
-      <div class="info-label">核心定位</div>
-      <div class="info-value">事项的路由中心与处置中心；AI预判分类，质控复核，规则知会，处置结果回传。</div>
+      <div class="info-label">删除传统界面</div>
+      <div class="info-value">删除现有侧边栏、Table列表、状态标签、操作按钮。改为与员工端一致的大对话框+助手矩阵。</div>
     </div>
     <div class="info-cell">
-      <div class="info-label">主要功能模块</div>
-      <div class="info-value">事项列表 · AI路由预判 · 质控复核 · 追踪看板 · 规则知会下发</div>
+      <div class="info-label">5助手固化顺序</div>
+      <div class="info-value">客户分析→业务分析→方案生成→交叉验证→客户服务。名字和顺序均不可改。交叉验证先摆上，后续视情况调整。</div>
     </div>
     <div class="info-cell">
-      <div class="info-label">覆盖条线</div>
-      <div class="info-value">资产管理条线 · 投资银行条线 · 零售财富条线 · 合规风控条线</div>
+      <div class="info-label">智能体共享协同</div>
+      <div class="info-value">支持端不用龙虾（个人空间），用智能体（共享、同步响应）。所有信息落在统一语料库，做完即同步。</div>
     </div>
   </div>
 
-  <div class="card" style="margin-bottom:20px">
-    <div class="block-title"><span class="bar"></span>设计要点</div>
-    <div style="font-size:12px;color:var(--text-muted);line-height:1.8">
-      <p style="margin-bottom:8px"><strong style="color:var(--text)">AI 预判 + 自动路由：</strong>事项进入支持端后，AI 自动识别类型与优先级并推荐路由目标，减少人工分拣成本，支持一键确认或手动调整。</p>
-      <p style="margin-bottom:8px"><strong style="color:var(--text)">质控复核闭环：</strong>处置过程全程留痕，质控结果、规则知会记录与处置结论绑定同一事项，确保可追溯、可审计。</p>
-      <p><strong style="color:var(--text)">跨部门协同入口：</strong>遇需决策或跨部门协调的事项，支持端可直接提请至协同端，形成"接收→处置→提请→反馈"完整链路。</p>
-    </div>
+  <div class="divider"></div>
+
+  <div class="block-title"><span class="bar"></span>一级提示词示意</div>
+  <div style="margin:8px 0;">
+    <span class="prompt-bubble">帮我分析XX客户的持仓结构</span>
+    <span class="prompt-bubble">生成一份城投债发行方案</span>
+    <span class="prompt-bubble">交叉验证这个方案与竞品差异</span>
+    <span class="prompt-bubble">客户服务：回复机构客户询价</span>
+  </div>
+  <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">
+    提示词为一级入口，点选后进入对应助手对话，二级提示词由各业务线自行设计。
   </div>
 
 </div><!-- /tab-sup -->
@@ -957,46 +1001,69 @@ tr:hover td { background: #fafafa; }
 <!-- ════════════════════ 协同端 ════════════════════ -->
 <div id="tab-col" class="tab-content">
 
-  <!-- iframe 预览 -->
+  <div class="endpoint-hero col">
+    <div class="ep-label">端三 · 新建 · 大幅简化</div>
+    <div class="ep-title">协同端</div>
+    <div class="ep-desc">只做组织协同入口，加AI提示词引导。删除原有五个固定板块（请示事项/经营看板/风险提示/队伍状况/应急组织）。经营数据通过AI对话查询，不做传统管理看板。</div>
+  </div>
+
   <div class="block-title"><span class="bar"></span>页面原型预览</div>
   <div class="preview-wrap">
     <div class="preview-bar">
-      <div class="preview-dot" style="background:#ef4444"></div>
-      <div class="preview-dot" style="background:#f59e0b"></div>
-      <div class="preview-dot" style="background:#22c55e"></div>
-      <div class="preview-url">aiworkspace-bsged01m2.maozi.io — 协同端</div>
+      <div class="preview-dot" style="background:#ef4444;"></div>
+      <div class="preview-dot" style="background:#f59e0b;"></div>
+      <div class="preview-dot" style="background:#22c55e;"></div>
+      <div class="preview-url">aiworkspace-bsged01m2.maozi.io/?tab=collab</div>
       <a class="preview-label" href="https://aiworkspace-bsged01m2.maozi.io/?tab=collab" target="_blank">新窗口打开 ↗</a>
     </div>
     <iframe class="preview-frame" src="https://aiworkspace-bsged01m2.maozi.io/?tab=collab" title="协同端原型"></iframe>
   </div>
 
-  <div class="endpoint-hero col">
-    <div class="ep-title">协同端</div>
-    <div class="ep-desc">根据当前登录人角色动态展示待处理事项与关注数据。业务负责人和分管领导可在此处理请示事项、批注意见、下发指令，也可查看规则触发的知晓类事项及执行进展。</div>
-  </div>
+  <div class="divider"></div>
 
+  <div class="block-title"><span class="bar"></span>核心设计要点</div>
   <div class="info-grid">
     <div class="info-cell">
-      <div class="info-label">核心定位</div>
-      <div class="info-value">面向业务负责人与决策层的动态工作台；按角色权限聚合待决策事项与需关注数据，支撑批阅、指令、跟踪全链路。</div>
+      <div class="info-label">删除五大板块</div>
+      <div class="info-value">原有请示事项、经营看板、风险提示、队伍状况、应急组织全部删除。不做传统管理看板的堆砌。</div>
     </div>
     <div class="info-cell">
-      <div class="info-label">主要功能</div>
-      <div class="info-value">待决策事项 · 批注意见 · 指令下发 · 知晓事项 · 执行进展跟踪</div>
+      <div class="info-label">入口+提示词</div>
+      <div class="info-value">只放几个组织协同入口（机构业务协同、销售业务协同等），配一级AI提示词。用户通过自然语言与AI交互获取信息。</div>
     </div>
     <div class="info-cell">
-      <div class="info-label">交互方式</div>
-      <div class="info-value">点击事项查看全面信息 → 批注意见/批准执行/下发指令 → 跟踪后续进展</div>
+      <div class="info-label">经营数据AI查询</div>
+      <div class="info-value">经营看板的数据不再固定展示。用户通过AI对话查询，如"显示本月投行项目进度"、"有哪些需要我决策的事项"。</div>
     </div>
   </div>
 
-  <div class="card" style="margin-bottom:20px">
-    <div class="block-title"><span class="bar"></span>设计要点</div>
-    <div style="font-size:12px;color:var(--text-muted);line-height:1.8">
-      <p style="margin-bottom:8px"><strong style="color:var(--text)">角色动态视图：</strong>根据登录人身份自动筛选其权责范围内的事项，不同领导看到的待办与关注数据各不相同，避免信息过载。</p>
-      <p style="margin-bottom:8px"><strong style="color:var(--text)">决策操作闭环：</strong>请示事项支持点击查看完整信息后，进行批注意见、批准执行或下发指令，决策记录自动归档并同步相关端。</p>
-      <p><strong style="color:var(--text)">主动知晓机制：</strong>除待决策事项外，系统按规则触发需领导知晓关注的事项推送，领导可随时查看执行进展，无需被动等待汇报。</p>
+  <div class="divider"></div>
+
+  <div class="block-title"><span class="bar"></span>协同端入口示意</div>
+  <div class="agent-matrix">
+    <div class="agent-chip">
+      <div class="agent-avatar">🏢</div>
+      <span class="agent-name">机构业务协同</span>
     </div>
+    <div class="agent-chip">
+      <div class="agent-avatar">📈</div>
+      <span class="agent-name">销售业务协同</span>
+    </div>
+    <div class="agent-chip">
+      <div class="agent-avatar">🤝</div>
+      <span class="agent-name">跨部门协同</span>
+    </div>
+  </div>
+
+  <div style="margin-top:12px;">
+    <span class="prompt-bubble">本周有哪些需要我决策的事项</span>
+    <span class="prompt-bubble">显示资管条线项目进度</span>
+    <span class="prompt-bubble">投行有哪些风险事项需要关注</span>
+    <span class="prompt-bubble">汇总本月协同处理成果</span>
+  </div>
+
+  <div style="margin-top:12px;font-size:11px;color:var(--text-muted);">
+    注：协同端内部具体分几个板块、各业务线如何设计，由各业务部门在统一框架下自行发挥。我们只提供入口和AI交互标准。
   </div>
 
 </div><!-- /tab-col -->
@@ -1007,10 +1074,11 @@ tr:hover td { background: #fafafa; }
 <script>
 function switchTab(id, btn) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.nav button').forEach(el => el.classList.remove('active'));
   document.getElementById('tab-' + id).classList.add('active');
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 }
 </script>
+
 </body>
 </html>
